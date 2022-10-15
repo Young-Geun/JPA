@@ -4,6 +4,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
+import java.util.List;
 
 public class JpaMain {
 
@@ -17,13 +18,16 @@ public class JpaMain {
          */
 
         // 사용자 저장
-        saveMember();
+        //saveMember();
 
         // 사용자 수정
-        editMember();
+        //editMember();
 
         // 사용자 삭제
-        removeMember();
+        //removeMember();
+
+        // 사용자 전체조회 (JPQL)
+        findMembers();
     }
 
     static void saveMember() {
@@ -108,6 +112,36 @@ public class JpaMain {
 
             // 사용자 삭제
             em.remove(member);
+
+            // 트랜잭션 커밋
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void findMembers() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            // 사용자 검색
+            List<Member> list = em.createQuery("select m from Member as m", Member.class)
+                    .getResultList();
+
+            System.out.println(list);
 
             // 트랜잭션 커밋
             tx.commit();
