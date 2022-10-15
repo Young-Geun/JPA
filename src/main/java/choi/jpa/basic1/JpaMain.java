@@ -8,6 +8,14 @@ import javax.persistence.Persistence;
 public class JpaMain {
 
     public static void main(String[] args) {
+        /*
+            - 주의사항
+            1. 엔티티 매니저 팩토리는 하나만 생성해서 애플리케이션 전체에서 공유한다.
+            2. EntityManager는 쓰레드 간에 공유해서는 안된다.
+            3. JPA의 모든 데이터 변경은 트랜잭션 안에서 실행한다.
+
+         */
+
         // 사용자 저장
         saveMember();
 
