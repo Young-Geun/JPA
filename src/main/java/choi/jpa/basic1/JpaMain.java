@@ -28,6 +28,9 @@ public class JpaMain {
 
         // 사용자 전체조회 (JPQL)
         findMembers();
+
+        // 영속과 비영속
+        managedAndTransient();
     }
 
     static void saveMember() {
@@ -142,6 +145,55 @@ public class JpaMain {
                     .getResultList();
 
             System.out.println(list);
+
+            // 트랜잭션 커밋
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void managedAndTransient() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            // 비영속 상태
+            Member member = new Member();
+            member.setId(100L);
+            member.setName("new_member");
+
+            // 영속 상태(객체를 저장한 상태로 실제 디비에 쿼리가 날라가는 시점은 아니다. 실제 실행 쿼리는 커밋하는 시점에 수행된다.)
+            System.out.println("==== before ====");
+            em.persist(member);
+            System.out.println("==== after ====");
+
+            /**
+             * 콘솔창 로
+             *
+             * ==== before ====
+             * ==== after ====
+             * Hibernate:
+             *   insert into Member (name, id)
+             *   values ( ?, ?)
+             *
+             * ====> 콘솔창에 before후에 바로 after가 찍힌 후
+             *       그 다음에 Insert 쿼리가 수행된다.
+             *       즉, em.persist(member); 코드에서 Insert쿼리가 수행되는 것이 아닌 tx.commit() 코드에서 수행되는 것을 알 수 있다.
+             *
+             */
 
             // 트랜잭션 커밋
             tx.commit();
