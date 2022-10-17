@@ -160,6 +160,24 @@ public class JpaMain {
     }
 
     static void managedAndTransient() {
+        /**
+         *
+         * 영속성과 비영속성
+         *
+         * - 영속성 컨텍스트 : '엔티티를 영구 저장하는 환경'이라는 뜻
+         * - 엔티티의 생명주기
+         *      1. 비영속(new/transient)
+         *          : 영속성 컨텍스트와 전혀 관계가 없는 새로운 상태
+         *      2. 영속(managed)
+         *          : 영속성 컨텍스트에 관리되는 상태
+         *      3. 준영속(detached)
+         *          : 영속성 컨텍스트에 저장되었다가 분리된 상태
+         *      4. 삭제(removed)
+         *          : 삭제된 상태
+         *
+         */
+
+
         // 선언
         EntityManagerFactory emf
                 = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
@@ -172,16 +190,15 @@ public class JpaMain {
         try {
             // 비영속 상태
             Member member = new Member();
-            member.setId(100L);
-            member.setName("new_member");
+            member.setId(101L);
+            member.setName("member101");
 
             // 영속 상태(객체를 저장한 상태로 실제 디비에 쿼리가 날라가는 시점은 아니다. 실제 실행 쿼리는 커밋하는 시점에 수행된다.)
             System.out.println("==== before ====");
             em.persist(member);
             System.out.println("==== after ====");
-
             /**
-             * 콘솔창 로
+             * 콘솔창 로그
              *
              * ==== before ====
              * ==== after ====
@@ -194,6 +211,14 @@ public class JpaMain {
              *       즉, em.persist(member); 코드에서 Insert쿼리가 수행되는 것이 아닌 tx.commit() 코드에서 수행되는 것을 알 수 있다.
              *
              */
+
+
+
+            // 준영속 상태(회원 엔티티를 영속성 컨텍스트에서 분리)
+            em.detach(member);
+
+            // 삭제(객체를 삭제한 상태)
+            em.remove(member);
 
             // 트랜잭션 커밋
             tx.commit();
