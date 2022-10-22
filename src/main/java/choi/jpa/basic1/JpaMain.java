@@ -27,10 +27,13 @@ public class JpaMain {
         //removeMember();
 
         // 사용자 전체조회 (JPQL)
-        findMembers();
+        //findMembers();
 
         // 영속과 비영속
-        managedAndTransient();
+        //managedAndTransient();
+
+        // 1차 캐시
+        findCashEx1();
     }
 
     static void saveMember() {
@@ -222,6 +225,60 @@ public class JpaMain {
 
             // 트랜잭션 커밋
             tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void findCashEx1() {
+        /**
+         *
+         * 1차 캐시
+         *
+         * - 영속성 컨텍스트 내부에 1차 캐시가 존재하며
+         *   조회 시, DB를 조회하기 전에 1차 캐시를 우선적으로 탐색한다.         *
+         */
+
+
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            // 영속 컨텍스트의 1차 캐시에 저장
+            Member member = new Member();
+            member.setId(201L);
+            member.setName("member201");
+            em.persist(member);
+
+            Member findMember = em.find(Member.class, 201L);
+            System.out.println(findMember);
+
+            // 트랜잭션 커밋
+            tx.commit();
+
+            /**
+             * 콘솔창 로그
+             *
+             * member201(201)
+             *
+             * ====> 콘솔창을 확인해보면 Insert 쿼리만 수행되었고,
+             *       조회 쿼리는 확인할 수 없다.
+             *       이는 id가 '201L'인 값을 조회할 때, DB가 아닌 1차 캐시에서 조회를 하기 때문이다.
+             *
+             */
+
         } catch (Exception e) {
             tx.rollback();
         } finally {
