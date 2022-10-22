@@ -42,7 +42,10 @@ public class JpaMain {
         //findCashEx3();
 
         // 쓰기지연
-        writeBehind();
+        // writeBehind();
+
+        // 변경감지
+        dirtyChecking();
     }
 
     static void saveMember() {
@@ -447,6 +450,49 @@ public class JpaMain {
              * ====> 콘솔창을 확인해보면 쿼리수행이 '사용자 301 등록', '사용자 302 등록' 문구 이후에 있는 것을 확인해볼 수 있다.
              *       * hibernate.jdbc.batch_size 옵션을 사용하여 버퍼를 지정할 수 있다.
              *
+             */
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void dirtyChecking() {
+        /**
+         * 변경감지(transactional write-behind)
+         *
+         * - JPA는 영속성 컨텍스트에 Entity를 보관할 때 최초의 상태를 저장한다. (이것을 스냅샷이라고 한다.)
+         *   영속성 컨텍스트가 Flush되는 시점에 스냅샷과 Entity의 현재 값을 비교하여 달라진 필드를 업데이트한다.
+         *
+         */
+
+
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Member member1 = em.find(Member.class, 1L);
+            System.out.println("member1 = " + member1); // member1 = user-1(1)
+
+            member1.setName("사용자-1");
+            // em.persist(member1); // 주석처리해도 UPDATE 쿼리가 수행된다.
+
+            // 트랜잭션 커밋
+            tx.commit();
+
+            /**
+             * DB를 조회해보면 변경된 것을 확인할 수 있다.
              */
         } catch (Exception e) {
             tx.rollback();
