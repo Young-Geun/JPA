@@ -36,10 +36,13 @@ public class JpaMain {
         //findCashEx1();
 
         // 1차 캐시
-        findCashEx2();
+        //findCashEx2();
 
         // 1차 캐시
-        findCashEx3();
+        //findCashEx3();
+
+        // 쓰기지연
+        writeBehind();
     }
 
     static void saveMember() {
@@ -383,6 +386,68 @@ public class JpaMain {
 
             // 트랜잭션 커밋
             tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void writeBehind() {
+        /**
+         *
+         * 쓰기지연(transactional write-behind)
+         *
+         * - 영속성 컨텍스트에 변경이 발생했을 때,
+         *   바로 데이터베이스로 쿼리를 보내지 않고 SQL 쿼리를 버퍼에 모아놨다가,
+         *   영속성 컨텍스트가 flush 하는 시점에 모아둔 SQL 쿼리를 데이터베이스로 보내는 기능
+         *
+         */
+
+
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Member member301 = new Member();
+            member301.setId(301L);
+            member301.setName("Member_301");
+            em.persist(member301);
+            System.out.println("사용자 301 등록");
+
+            Member member302 = new Member();
+            member302.setId(302L);
+            member302.setName("Member_302");
+            em.persist(member302);
+            System.out.println("사용자 302 등록");
+
+            // 트랜잭션 커밋
+            tx.commit();
+
+            /**
+             * 콘솔창 로그
+             *
+             * 사용자 301 등록
+             * 사용자 302 등록
+             * Hibernate:
+             *  insert into Member (name, id) values (?, ?)
+             * Hibernate:
+             *  insert into Member (name, id) values (?, ?)
+             *
+             * ====> 콘솔창을 확인해보면 쿼리수행이 '사용자 301 등록', '사용자 302 등록' 문구 이후에 있는 것을 확인해볼 수 있다.
+             *       * hibernate.jdbc.batch_size 옵션을 사용하여 버퍼를 지정할 수 있다.
+             *
+             */
         } catch (Exception e) {
             tx.rollback();
         } finally {
