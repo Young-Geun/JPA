@@ -33,7 +33,13 @@ public class JpaMain {
         //managedAndTransient();
 
         // 1차 캐시
-        findCashEx1();
+        //findCashEx1();
+
+        // 1차 캐시
+        findCashEx2();
+
+        // 1차 캐시
+        findCashEx3();
     }
 
     static void saveMember() {
@@ -279,6 +285,104 @@ public class JpaMain {
              *
              */
 
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void findCashEx2() {
+        /**
+         *
+         * 1차 캐시
+         *
+         * - 영속성 컨텍스트 내부에 1차 캐시가 존재하며
+         *   조회 시, DB를 조회하기 전에 1차 캐시를 우선적으로 탐색한다.
+         */
+
+
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Member findMember1 = em.find(Member.class, 201L);
+            System.out.println(findMember1);
+
+            Member findMember2 = em.find(Member.class, 201L);
+            System.out.println(findMember2);
+
+            // 트랜잭션 커밋
+            tx.commit();
+
+            /**
+             * 콘솔창 로그
+             *
+             * Hibernate:
+             *     select
+             *         member0_.id as id1_0_0_,
+             *         member0_.name as name2_0_0_
+             *     from
+             *         Member member0_
+             *     where
+             *         member0_.id=?
+             *
+             * member101(201)
+             * member101(201)
+             *
+             * ====> 콘솔창을 확인해보면 최초 한 번만 DB에서 조회하고, 두 번째는 1차 캐시에서 조회하는 것을 확인할 수 있다.
+             *
+             */
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void findCashEx3() {
+        /**
+         *
+         * 영속 엔티티의 동일성 보장
+         *
+         * - 1차 캐시로 인하여 동일한 객체임을 보장한다.
+         *
+         */
+
+
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Member findMember1 = em.find(Member.class, 201L);
+            Member findMember2 = em.find(Member.class, 201L);
+
+            System.out.println("findMember1 == findMember2 : " +  (findMember1 == findMember2));
+            // findMember1 == findMember2 : true
+            // ==> equals() 비교가 아니지만 true 반환
+
+            // 트랜잭션 커밋
+            tx.commit();
         } catch (Exception e) {
             tx.rollback();
         } finally {
