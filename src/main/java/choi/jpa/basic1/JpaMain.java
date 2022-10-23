@@ -509,6 +509,14 @@ public class JpaMain {
     }
 
     static void flush() {
+        /**
+         * flush
+         *
+         * - 영속성 컨텍스트의 변경내용을 데이터베이스에 동기화 시키는 작업이다.
+         * - [주의!] 영속성 컨텍스트를 비우는 것은 아니다.
+         *
+         */
+
         // 선언
         EntityManagerFactory emf
                 = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
