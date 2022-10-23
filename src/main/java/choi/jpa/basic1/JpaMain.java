@@ -48,7 +48,10 @@ public class JpaMain {
         //dirtyChecking();
 
         // flush
-        flush();
+        //flush();
+
+        // detach()
+        detach();
     }
 
     static void saveMember() {
@@ -533,6 +536,46 @@ public class JpaMain {
             em.persist(member);
 
             em.flush(); // flush()를 호출하는 시점에 Insert쿼리가 수행된다.
+
+            // 트랜잭션 커밋
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void detach() {
+        /**
+         * detach
+         *
+         * - 영속 > 준영속 상태로 변경
+         *
+         */
+
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Member member = em.find(Member.class, 1L);
+            member.setName("사용자-1(수정)");
+
+            // 1. 특정 엔티티만 준영속 상태로 변경하는 방법
+            em.detach(member); // detach()를 사용했기 때문에 콘솔창에 Update 쿼리가 수행되는 모습을 볼 수 없다.
+
+            // 2. EntityManager에 속한 모든 엔티티를 준영속 상태로 변경하는 방법
+            // em.clear();
 
             // 트랜잭션 커밋
             tx.commit();
