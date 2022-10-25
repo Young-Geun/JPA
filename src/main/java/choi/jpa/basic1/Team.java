@@ -1,6 +1,8 @@
 package choi.jpa.basic1;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 public class Team {
@@ -11,6 +13,9 @@ public class Team {
     private Long id;
 
     private String name;
+
+    @OneToMany(mappedBy = "team")
+    private List<Player> players = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -28,4 +33,11 @@ public class Team {
         this.name = name;
     }
 
+    public List<Player> getPlayers() {
+        return players;
+    }
+
+    public void setPlayers(List<Player> players) {
+        this.players = players;
+    }
 }

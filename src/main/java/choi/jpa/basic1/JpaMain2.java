@@ -4,6 +4,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
+import java.util.List;
 
 public class JpaMain2 {
 
@@ -12,7 +13,10 @@ public class JpaMain2 {
         //ex1();
 
         // 객체 지향 모델링 - 단방향 연관관계
-        ex2();
+        //ex2();
+
+        // 객체 지향 모델링 - 양방향 연관관계
+        ex3();
     }
 
     static void ex1() {
@@ -58,6 +62,42 @@ public class JpaMain2 {
     }
 
     static void ex2() {
+//        // 선언
+//        EntityManagerFactory emf
+//                = Persistence.createEntityManagerFactory("hello");
+//        EntityManager em = emf.createEntityManager();
+//
+//        // 트랜잭션 선언 및 시작
+//        EntityTransaction tx = em.getTransaction();
+//        tx.begin();
+//
+//        try {
+//            // 팀 저장
+//            Team team = new Team();
+//            team.setName("TeamB");
+//            em.persist(team);
+//
+//            // 회원 저장
+//            Player player = new Player();
+//            player.setName("player-2");
+//            player.setTeam(team);
+//            em.persist(player);
+//
+//            // 조회
+//            Player findPlayer = em.find(Player.class, player.getId());
+//            Team findTeam = findPlayer.getTeam();
+//
+//            tx.commit();
+//        } catch (Exception e) {
+//            tx.rollback();
+//        } finally {
+//            em.close();
+//        }
+//
+//        emf.close();
+    }
+
+    static void ex3() {
         // 선언
         EntityManagerFactory emf
                 = Persistence.createEntityManagerFactory("hello");
@@ -79,9 +119,16 @@ public class JpaMain2 {
             player.setTeam(team);
             em.persist(player);
 
+            em.flush();
+            em.clear();
+
             // 조회
             Player findPlayer = em.find(Player.class, player.getId());
-            Team findTeam = findPlayer.getTeam();
+            List<Player> players = findPlayer.getTeam().getPlayers();
+
+            for (Player p : players) {
+                System.out.println("player name : " + p.getName());
+            }
 
             tx.commit();
         } catch (Exception e) {
