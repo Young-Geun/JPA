@@ -16,7 +16,10 @@ public class JpaMain2 {
         //ex2();
 
         // 객체 지향 모델링 - 양방향 연관관계
-        ex3();
+        //ex3();
+
+        // 객체 지향 모델링 - 양방향 연관관계 : 오류 예제
+        ex4();
     }
 
     static void ex1() {
@@ -131,6 +134,48 @@ public class JpaMain2 {
             }
 
             tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
+    static void ex4() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            // 회원 저장
+            Player player = new Player();
+            player.setName("player-ERROR");
+            em.persist(player);
+
+            // 팀 저장
+            Team team = new Team();
+            team.setName("TeamERROR");
+            team.getPlayers().add(player);
+            em.persist(team);
+
+            em.flush();
+            em.clear();
+
+            tx.commit();
+
+
+            /*
+                실행결과
+                - DB를 조회해보면 'player-ERROR'의 TEAM_ID값이 null이다.
+                - team의 players에는 mappedBy 속성을 가지고 있기 때문에 읽기 전용이되어 이런 현상이 발생한다.
+             */
         } catch (Exception e) {
             tx.rollback();
         } finally {
