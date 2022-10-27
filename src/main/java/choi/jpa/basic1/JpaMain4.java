@@ -14,7 +14,10 @@ public class JpaMain4 {
         // ex1();
 
         // 단일테이블 전략
-        ex2();
+        // ex2();
+
+        // 구현 클래스마다 테이블 전략
+        ex3();
     }
 
     static void ex1() {
@@ -124,6 +127,107 @@ public class JpaMain4 {
                     where
                         movie0_.id=?
                         and movie0_.DTYPE='Movie'
+             */
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
+    static void ex3() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Movie movie = new Movie();
+            movie.setDirector("감독 A");
+            movie.setActor("배우 A");
+            movie.setName("스프링부트");
+            movie.setPrice(10_000);
+
+            em.persist(movie);
+            /*
+                테이블 조회 시, 아래와 같이 데이터가 생성되어있음
+                - ITEM 테이블 (해당 전략에서는 ITEM 테이블이 생성되지 않는다.)
+
+                - MOVIE 테이블
+                    ID  	NAME  	PRICE  	ACTOR  	DIRECTOR
+                    1	    스프링부트	10000	배우 A	감독 A
+             */
+
+
+            // 1차 캐시 삭제
+            em.flush();
+            em.clear();
+
+            // 부모 클래스를 기준으로 조회 시, 콘솔창의 쿼리를 확인해보면 union all을 사용해서 가져오는 것을 확인할 수 있다. (성능상 좋지 않음)
+            // Item이 아닌 자식 객체(Ex. Movie)를 기준으로 조회하면 해당 테이블(Ex. MOVIE)만 조회한다.
+            Item findItem = em.find(Item.class, movie.getId());
+            /*
+                Hibernate:
+                        select
+                            item0_.id as id1_2_0_,
+                            item0_.name as name2_2_0_,
+                            item0_.price as price3_2_0_,
+                            item0_.artist as artist1_0_0_,
+                            item0_.author as author1_1_0_,
+                            item0_.isbn as isbn2_1_0_,
+                            item0_.actor as actor1_5_0_,
+                            item0_.director as director2_5_0_,
+                            item0_.clazz_ as clazz_0_
+                        from
+                            ( select
+                                id,
+                                name,
+                                price,
+                                artist,
+                                null as author,
+                                null as isbn,
+                                null as actor,
+                                null as director,
+                                1 as clazz_
+                            from
+                                Album
+                            union
+                            all select
+                                id,
+                                name,
+                                price,
+                                null as artist,
+                                author,
+                                isbn,
+                                null as actor,
+                                null as director,
+                                2 as clazz_
+                            from
+                                Book
+                            union
+                            all select
+                                id,
+                                name,
+                                price,
+                                null as artist,
+                                null as author,
+                                null as isbn,
+                                actor,
+                                director,
+                                3 as clazz_
+                            from
+                                Movie
+                        ) item0_
+                    where
+                        item0_.id=?
              */
 
             tx.commit();
