@@ -1,6 +1,6 @@
 package choi.jpa;
 
-import choi.jpa.domain.Member;
+import choi.jpa.domain.Book;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -24,13 +24,21 @@ public class JpaMain {
         tx.begin();
 
         try {
-            Member member = new Member();
-            member.setName("사용자-1");
+            Book book = new Book();
+            book.setName("JPA");
+            book.setAuthor("CHOI");
 
-            em.persist(member);
+            em.persist(book);
 
             // 트랜잭션 커밋
             tx.commit();
+
+            /** 데이터 조회 결과(ITEM 테이블) */
+            /*
+                DTYPE  	ITEM_ID  	NAME  	PRICE  	STOCKQUANTITY  	AUTHOR  	ISBN  	ACTOR  	DIRECTOR  	ARTIST  	ETC
+                Book	1	        JPA	    0	    0	            CHOI	    null	null	null	    null	    null
+            */
+
         } catch (Exception e) {
             tx.rollback();
         } finally {
