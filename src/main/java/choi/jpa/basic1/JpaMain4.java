@@ -17,7 +17,11 @@ public class JpaMain4 {
         // ex2();
 
         // 구현 클래스마다 테이블 전략
-        ex3();
+        // ex3();
+
+
+        /** @MappedSuperclass 예제 */
+        ex4();
     }
 
     static void ex1() {
@@ -231,6 +235,40 @@ public class JpaMain4 {
              */
 
             tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
+    static void ex4() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Player player = new Player();
+            player.setCreatedBy("choi");
+            player.setModifiedBy("kim");
+
+            em.persist(player);
+
+            em.flush();
+            em.clear();
+
+            tx.commit();
+
+            /*
+                Player와 Team 테이블에 'CREATEDBY', 'MODIFIEDBY' 컬럼이 공통으로 생성된 것을 확인해볼 수 있다.
+             */
         } catch (Exception e) {
             tx.rollback();
         } finally {
