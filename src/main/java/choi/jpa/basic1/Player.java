@@ -15,11 +15,13 @@ public class Player extends BaseEntity {
 //    @Column(name = "TEAM_ID")
 //    private Long teamId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    // @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "TEAM_ID")
     private Team team;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    // @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "LOCKER_ID")
     private Locker locker;
 

@@ -14,10 +14,18 @@ public class JpaMain5 {
         // ex1();
 
         // 준영속 상태일 떄 초기화 오류
-        ex2();
+        //ex2();
 
         // 지연로딩 (@ManyToOne(fetch = FetchType.LAZY))
-        ex3();
+        //ex3();
+
+        // 즉시로딩 (@ManyToOne(fetch = FetchType.EAGER))
+        /*
+            실무에서는 가급적 지연로딩을 사용할 것.
+            : 예기치 못한 SQL 발생 가능성이 있다.
+            : 즉시로딩은 JPQL에서 N+1 문제를 일으킨다.
+         */
+        ex4();
     }
 
     static void ex1() {
@@ -205,6 +213,71 @@ public class JpaMain5 {
                         team0_.TEAM_ID=?
 
                  ==> TEAM 테이블의 데이터를 조회할 때 TEAM 테이블 관련 쿼리가 수행된다.(지연 실행)
+             */
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
+    static void ex4() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Team team = new Team();
+            team.setName("Team A");
+            em.persist(team);
+
+            Player player = new Player();
+            player.setName("proxy-3");
+            player.setTeam(team);
+            em.persist(player);
+
+            em.flush();
+            em.clear();
+
+            /* Player만 조회 */
+            Player findPlayer = em.find(Player.class, player.getId());
+            System.out.println(findPlayer.getName());
+            /*
+                Hibernate:
+                    select
+                        player0_.id as id1_6_0_,
+                        player0_.createdBy as createdB2_6_0_,
+                        player0_.modifiedBy as modified3_6_0_,
+                        player0_.LOCKER_ID as LOCKER_I5_6_0_,
+                        player0_.USERNAME as USERNAME4_6_0_,
+                        player0_.TEAM_ID as TEAM_ID6_6_0_,
+                        locker1_.id as id1_3_1_,
+                        locker1_.name as name2_3_1_,
+                        team2_.TEAM_ID as TEAM_ID1_7_2_,
+                        team2_.createdBy as createdB2_7_2_,
+                        team2_.modifiedBy as modified3_7_2_,
+                        team2_.name as name4_7_2_
+                    from
+                        Player player0_
+                    left outer join
+                        Locker locker1_
+                            on player0_.LOCKER_ID=locker1_.id
+                    left outer join
+                        Team team2_
+                            on player0_.TEAM_ID=team2_.TEAM_ID
+                    where
+                        player0_.id=?
+
+                ==> ex3과 다르게 Player만 조회하여도 관련 테이블을 모두 조회한다.
              */
 
             tx.commit();
