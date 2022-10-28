@@ -15,6 +15,9 @@ public class JpaMain5 {
 
         // 준영속 상태일 떄 초기화 오류
         ex2();
+
+        // 지연로딩 (@ManyToOne(fetch = FetchType.LAZY))
+        ex3();
     }
 
     static void ex1() {
@@ -123,6 +126,90 @@ public class JpaMain5 {
 
                 ==>
              */
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
+    static void ex3() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Team team = new Team();
+            team.setName("Team A");
+            em.persist(team);
+
+            Player player = new Player();
+            player.setName("proxy-3");
+            player.setTeam(team);
+            em.persist(player);
+
+            em.flush();
+            em.clear();
+
+            /* Player만 조회 */
+//            Player findPlayer = em.find(Player.class, player.getId());
+//            System.out.println(findPlayer.getName());
+//            /*
+//                Hibernate:
+//                    select
+//                        player0_.id as id1_6_0_,
+//                        player0_.createdBy as createdB2_6_0_,
+//                        player0_.modifiedBy as modified3_6_0_,
+//                        player0_.LOCKER_ID as LOCKER_I5_6_0_,
+//                        player0_.USERNAME as USERNAME4_6_0_,
+//                        player0_.TEAM_ID as TEAM_ID6_6_0_
+//                    from
+//                        Player player0_
+//                    where
+//                        player0_.id=?
+//
+//                ==> @ManyToOne(fetch = FetchType.LAZY) 사용으로 이전과 다르게 조인없이 Player 테이블만 조회해온다.
+//             */
+
+
+            /* Team 조회 */
+            Player findPlayer = em.find(Player.class, player.getId());
+            System.out.println(findPlayer.getTeam().getName());
+            /*
+                Hibernate:
+                    select
+                        player0_.id as id1_6_0_,
+                        player0_.createdBy as createdB2_6_0_,
+                        player0_.modifiedBy as modified3_6_0_,
+                        player0_.LOCKER_ID as LOCKER_I5_6_0_,
+                        player0_.USERNAME as USERNAME4_6_0_,
+                        player0_.TEAM_ID as TEAM_ID6_6_0_
+                    from
+                        Player player0_
+                    where
+                        player0_.id=?
+                Hibernate:
+                    select
+                        team0_.TEAM_ID as TEAM_ID1_7_0_,
+                        team0_.createdBy as createdB2_7_0_,
+                        team0_.modifiedBy as modified3_7_0_,
+                        team0_.name as name4_7_0_
+                    from
+                        Team team0_
+                    where
+                        team0_.TEAM_ID=?
+
+                 ==> TEAM 테이블의 데이터를 조회할 때 TEAM 테이블 관련 쿼리가 수행된다.(지연 실행)
+             */
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
         } finally {
             em.close();
         }
