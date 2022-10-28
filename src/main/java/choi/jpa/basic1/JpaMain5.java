@@ -10,7 +10,11 @@ public class JpaMain5 {
     public static void main(String[] args) {
         /** 프록시 예제 */
 
-        ex1();
+        // 프록시 기본 예제
+        // ex1();
+
+        // 준영속 상태일 떄 초기화 오류
+        ex2();
     }
 
     static void ex1() {
@@ -72,6 +76,53 @@ public class JpaMain5 {
             tx.commit();
         } catch (Exception e) {
             tx.rollback();
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
+    static void ex2() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Player player = new Player();
+            player.setName("proxy-2");
+            em.persist(player);
+
+            em.flush();
+            em.clear();
+
+            Player findPlayer = em.getReference(Player.class, player.getId());
+            em.detach(findPlayer); // close(), clear() 모두 동일한 오류 발생
+
+            System.out.println(findPlayer.getName()); // ==> 오류 발생. em.getReference()는 준영속상태가 되면 오류가 발생한다.
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+            e.printStackTrace();
+            /*
+                org.hibernate.LazyInitializationException: could not initialize proxy [choi.jpa.basic1.Player#1] - no Session
+                at org.hibernate.proxy.AbstractLazyInitializer.initialize(AbstractLazyInitializer.java:169)
+                at org.hibernate.proxy.AbstractLazyInitializer.getImplementation(AbstractLazyInitializer.java:309)
+                at org.hibernate.proxy.pojo.bytebuddy.ByteBuddyInterceptor.intercept(ByteBuddyInterceptor.java:45)
+                at org.hibernate.proxy.ProxyConfiguration$InterceptorDispatcher.intercept(ProxyConfiguration.java:95)
+                at choi.jpa.basic1.Player$HibernateProxy$hdn9STcr.getName(Unknown Source)
+                at choi.jpa.basic1.JpaMain5.ex2(JpaMain5.java:107)
+                at choi.jpa.basic1.JpaMain5.main(JpaMain5.java:17)
+
+
+                ==>
+             */
         } finally {
             em.close();
         }
