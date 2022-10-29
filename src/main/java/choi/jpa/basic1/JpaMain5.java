@@ -27,8 +27,18 @@ public class JpaMain5 {
          */
         //ex4();
 
+
+
+
         /** CASCADE 예제 */
-        ex5();
+
+        // CASCADE 기본 예제 (cascade = CascadeType.ALL)
+        //ex5();
+
+        /* 고아객체 삭제 예제 (orphanRemoval = true)
+            - 참조가 끊어진 엔티티를 삭제하는 기능
+        */
+        ex6();
     }
 
     static void ex1() {
@@ -332,6 +342,46 @@ public class JpaMain5 {
             parent.addChild(child2);
 
             em.persist(parent);
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
+    static void ex6() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Child child1 = new Child();
+            Child child2 = new Child();
+
+            Parent parent = new Parent();
+            parent.addChild(child1);
+            parent.addChild(child2);
+
+            em.persist(parent);
+
+            em.flush();
+            em.clear();
+
+            Parent findParent = em.find(Parent.class, parent.getId());
+            findParent.getChildList().remove(0); // 첫 번째 자식요소 삭제
+            /*
+                orphanRemoval = true 옵션에 의하여, childList에서 제외된 요소를 DB에서 제거된다.
+                * false인 경우에는 DB에서 제거되지 않는다.
+             */
 
             tx.commit();
         } catch (Exception e) {
