@@ -28,6 +28,14 @@ public class Employee {
     @Embedded
     private Address homeAddress;
 
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "city", column = @Column(name = "COPR_CITY")),
+            @AttributeOverride(name = "street", column = @Column(name = "COPR_STREET")),
+            @AttributeOverride(name = "zipcode", column = @Column(name = "COPR_ZIPCODE")),
+    })
+    private Address corAddress;
+
     public Long getId() {
         return id;
     }
@@ -58,6 +66,14 @@ public class Employee {
 
     public void setHomeAddress(Address homeAddress) {
         this.homeAddress = homeAddress;
+    }
+
+    public Address getCorAddress() {
+        return corAddress;
+    }
+
+    public void setCorAddress(Address corAddress) {
+        this.corAddress = corAddress;
     }
 
 }
