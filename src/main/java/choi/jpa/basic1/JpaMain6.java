@@ -12,7 +12,10 @@ public class JpaMain6 {
         //ex1();
 
         // 임베디드 타입 - 속성 재정의
-        ex2();
+        //ex2();
+
+        // 임베디드 타입 - 오류 예제
+        ex3();
     }
 
     static void ex1() {
@@ -66,6 +69,48 @@ public class JpaMain6 {
              */
 
             em.persist(employee);
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
+    static void ex3() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Address address = new Address("서울", "천왕로", "12312");
+
+            Employee employee1 = new Employee();
+            employee1.setName("choi");
+            employee1.setWordPeriod(new Period(LocalDateTime.now(), LocalDateTime.now().plusDays(365)));
+            employee1.setHomeAddress(address);
+            em.persist(employee1);
+
+            Employee employee2 = new Employee();
+            employee2.setName("kim");
+            employee2.setWordPeriod(new Period(LocalDateTime.now(), LocalDateTime.now().plusDays(365)));
+            employee2.setHomeAddress(address);
+            em.persist(employee2);
+
+            /* 주의
+                - 예상 : employee1의 우편코드를 바꿈.
+                - 실제 : employee2의 우편코드까지 바뀜.
+             */
+            employee1.getHomeAddress().setZipcode("99999");
 
             tx.commit();
         } catch (Exception e) {
