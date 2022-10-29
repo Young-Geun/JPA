@@ -15,7 +15,10 @@ public class JpaMain6 {
         //ex2();
 
         // 임베디드 타입 - 오류 예제
-        ex3();
+        //ex3();
+
+        // 값 타입 컬렉션
+        ex4();
     }
 
     static void ex1() {
@@ -111,6 +114,75 @@ public class JpaMain6 {
                 - 실제 : employee2의 우편코드까지 바뀜.
              */
             employee1.getHomeAddress().setZipcode("99999");
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
+    static void ex4() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Student student = new Student();
+            student.setName("학생-1");
+            student.setHomeAddress(new Address("서울", "구로구", "12345"));
+
+            // 값 타입 컬렉션 예제 START
+            student.getFavoriteFoods().add("치킨");
+            student.getFavoriteFoods().add("피자");
+
+            student.getAddressHistory().add(new Address("경기", "대왕판교로", "98765"));
+            student.getAddressHistory().add(new Address("서울", "구로구", "12345"));
+            // 값 타입 컬렉션 예제 END
+
+            em.persist(student);
+
+            em.flush();
+            em.clear();
+
+            Student findStudent = em.find(Student.class, student.getId());
+            /*
+                Hibernate:
+                    select
+                        student0_.STUDENT_ID as STUDENT_1_12_0_,
+                        student0_.city as city2_12_0_,
+                        student0_.street as street3_12_0_,
+                        student0_.zipcode as zipcode4_12_0_,
+                        student0_.name as name5_12_0_
+                    from
+                        Student student0_
+                    where
+                        student0_.STUDENT_ID=?
+
+                ==> FavoriteFoods와 AddressHistory는 가져오지 않고 있음.
+                    실제 값을 쓰게되면 그때 가져옴(값 타입 컬렉션은 지연로딩 방식임을 알 수 있다.)
+             */
+
+            findStudent.getAddressHistory().remove(new Address("경기", "대왕판교로", "98765"));
+            findStudent.getAddressHistory().add(new Address("경기", "대왕판교로", "56789"));
+            // -> 첫 번째 데이터의 값을 변경하고자할 때, 기존 데이터를 지우고 새로운 값을 넣는 방식으로 해야한다.
+            //    : 단, remove() 내부적으로 equals()가 동작하여 true일 경우에만 삭제되므로 equals를 제대로 재정의하지 않으면 값이 지워지지 않는 현상이 발생할 수 있다.
+
+            // * 업데이트 동작방식
+            //   실제 실행되는 쿼리를 보면 첫 번째 데이터를 지우고 두 번째 데이터를 넣는 것이 아니라
+            //   모든 데이터를 지운 후, new Address("서울", "구로구", "12345"), new Address("경기", "대왕판교로", "56789")에 해당하는 값을 넣게된다.
+
+
+
 
             tx.commit();
         } catch (Exception e) {
