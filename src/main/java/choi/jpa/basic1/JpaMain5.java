@@ -39,6 +39,15 @@ public class JpaMain5 {
             - 참조가 끊어진 엔티티를 삭제하는 기능
         */
         ex6();
+
+
+
+        /*
+            - (CascadeType.ALL) + (orphanRemoval = true)
+            : 두 옵션을 사용하면,
+              부모 엔티티를 통해서 자식의 생명주기를 관리할 수 있다.
+              도메인 주도 설계(DDD)의 Aggregate Root 개념을 구현할 때 유용하다.
+         */
     }
 
     static void ex1() {
