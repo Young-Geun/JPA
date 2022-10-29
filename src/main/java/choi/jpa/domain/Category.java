@@ -17,7 +17,7 @@ public class Category extends BaseEntity {
         카테고리 관련 변수 Start
         - 계층형 형태(셀프 조인 형태)이기 때문에 아래와 같이 구현
     */
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "PARENT_D")
     private Category parent;
 
