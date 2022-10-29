@@ -25,7 +25,10 @@ public class JpaMain5 {
             : 예기치 못한 SQL 발생 가능성이 있다.
             : 즉시로딩은 JPQL에서 N+1 문제를 일으킨다.
          */
-        ex4();
+        //ex4();
+
+        /** CASCADE 예제 */
+        ex5();
     }
 
     static void ex1() {
@@ -279,6 +282,56 @@ public class JpaMain5 {
 
                 ==> ex3과 다르게 Player만 조회하여도 관련 테이블을 모두 조회한다.
              */
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
+    static void ex5() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            /*
+                - CASCADE 사용 전
+                  : parent, child1, child2를 모두 persist() 해줘야 한다.
+            */
+//            Child child1 = new Child();
+//            Child child2 = new Child();
+//
+//            Parent parent = new Parent();
+//            parent.addChild(child1);
+//            parent.addChild(child2);
+//
+//            em.persist(parent);
+//            em.persist(child1);
+//            em.persist(child2);
+
+
+            /*
+                - CASCADE 사용 후
+                  : parent만 persist() 해도 child1과 child2가 등록된다.
+            */
+            Child child1 = new Child();
+            Child child2 = new Child();
+
+            Parent parent = new Parent();
+            parent.addChild(child1);
+            parent.addChild(child2);
+
+            em.persist(parent);
 
             tx.commit();
         } catch (Exception e) {
