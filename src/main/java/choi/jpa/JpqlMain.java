@@ -25,7 +25,10 @@ public class JpqlMain {
         //ex6();
 
         // 서브쿼리 예제
-        ex7();
+        //ex7();
+
+        // 타입표현 및 표현식 예제
+        ex8();
     }
 
     static void ex1() {
@@ -362,6 +365,76 @@ public class JpqlMain {
                     2. 하지만 SELECT절도 가능(하이버네이트에서 지원해주기 때문)
                     3. FROM 절의 서브 쿼리는 현재 JPQL에서 불가능(2022-10-30 기준)
              */
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void ex8() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Team team = new Team();
+            team.setName("TeamA");
+            em.persist(team);
+
+            for (int i = 0; i < 10; i++) {
+                Member member = new Member();
+                if (i % 2 == 0) {
+                    member.setUsername("유저" + i);
+                    member.setType(MemberType.USER);
+                } else {
+                    member.setUsername("관리자" + i);
+                    member.setType(MemberType.ADMIN);
+                }
+                member.setAge(i);
+                member.setTeam(team);
+
+                em.persist(member);
+            }
+
+            em.flush();
+            em.clear();
+
+            /** ENUM 사용 예제 */
+            List<Member> adminList = em.createQuery("select m from Member m where m.type = choi.jpa.MemberType.ADMIN", Member.class).getResultList(); // inner 대신 다른 조인방법 사용가능
+            System.out.println(adminList);
+            /*
+                [
+                Member{id=3, username='관리자1', age=1},
+                Member{id=5, username='관리자3', age=3},
+                Member{id=7, username='관리자5', age=5},
+                Member{id=9, username='관리자7', age=7},
+                Member{id=11, username='관리자9', age=9}
+                ]
+             */
+
+            /** 그 외에 사용할 수 있는 타입 : 문자, 숫자, Boolean, 엔티티 타입 */
+            // 생략
+
+
+            /**
+             *  - JPQL 기타 표현식
+             *    : SQL과 문법식과 동일하게 EXISTS, IN, AND, OR, NOT, =, >, >=, BETWEEN, LIKE, IS NULL 등을 사용 가능하다.
+             */
+            List<Member> betweenList = em.createQuery("select m from Member m where m.age between 5 and 7", Member.class).getResultList(); // inner 대신 다른 조인방법 사용가능
+            System.out.println(betweenList);
+            // [Member{id=7, username='관리자5', age=5}, Member{id=8, username='유저6', age=6}, Member{id=9, username='관리자7', age=7}]
 
             tx.commit();
         } catch (Exception e) {

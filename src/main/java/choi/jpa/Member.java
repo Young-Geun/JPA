@@ -11,6 +11,9 @@ public class Member {
     private String username;
     private int age;
 
+    @Enumerated(value = EnumType.STRING)
+    private MemberType type;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "TEAM_ID")
     private Team team;
@@ -50,6 +53,14 @@ public class Member {
 
     public void setTeam(Team team) {
         this.team = team;
+    }
+
+    public MemberType getType() {
+        return type;
+    }
+
+    public void setType(MemberType type) {
+        this.type = type;
     }
 
     @Override
