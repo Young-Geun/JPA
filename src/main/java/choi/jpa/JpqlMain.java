@@ -16,7 +16,10 @@ public class JpqlMain {
         //ex3();
 
         // 프로젝션 예제
-        ex4();
+        //ex4();
+
+        // 페이징 예제
+        ex5();
     }
 
     static void ex1() {
@@ -193,6 +196,48 @@ public class JpqlMain {
                 System.out.println(dto.getUsername() + " : " + dto.getAge());
             }
             // 유저1_갱신 : 30
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void ex5() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            /** 영속성 컨텍스트 */
+            for (int i = 0; i < 100; i++) {
+                Member member = new Member();
+                member.setUsername("유저" + i);
+                member.setAge(i);
+                em.persist(member);
+            }
+
+            em.flush();
+            em.clear();
+
+            List<Member> resultList = em.createQuery("select m from Member m order by m.age desc", Member.class)
+                    .setFirstResult(0)
+                    .setMaxResults(5)
+                    .getResultList();
+
+            System.out.println(resultList);
+            // [Member{id=100, username='유저99', age=99}, Member{id=99, username='유저98', age=98}, Member{id=98, username='유저97', age=97}, Member{id=97, username='유저96', age=96}, Member{id=96, username='유저95', age=95}]
 
             tx.commit();
         } catch (Exception e) {
