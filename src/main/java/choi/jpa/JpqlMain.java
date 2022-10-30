@@ -13,7 +13,10 @@ public class JpqlMain {
         //ex2();
 
         // 파라미터 바인딩 예제
-        ex3();
+        //ex3();
+
+        // 프로젝션 예제
+        ex4();
     }
 
     static void ex1() {
@@ -141,6 +144,55 @@ public class JpqlMain {
                 - 실행결과
                 유저2
              */
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void ex4() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            /** 영속성 컨텍스트 */
+            Member member1 = new Member();
+            member1.setUsername("유저1");
+            member1.setAge(30);
+            em.persist(member1);
+
+            em.flush();
+            em.clear();
+
+            List<Member> resultList = em.createQuery("select m from Member m", Member.class).getResultList();
+            resultList.get(0).setUsername("유저1_갱신");
+            /*
+                - 실행쿼리를 확인해보면
+                 유저의 이름이 변경되는데, 이는 resultList도 영속성 컨텍스트로 관리된다는 뜻임을 알 수 있다.
+             */
+
+
+
+
+            /** 스칼라 타입 프로젝션 */
+            List<MemberDTO> dtoList = em.createQuery("select new choi.jpa.MemberDTO(m.username, m.age) from Member m", MemberDTO.class).getResultList();
+            for (MemberDTO dto : dtoList) {
+                System.out.println(dto.getUsername() + " : " + dto.getAge());
+            }
+            // 유저1_갱신 : 30
 
             tx.commit();
         } catch (Exception e) {
