@@ -18,7 +18,10 @@ public class JpaMain7 {
         // ex1();
 
         // Criteria 기본
-        ex2();
+        // ex2();
+
+        // NativeQuery 기본
+        ex3();
     }
 
     static void ex1() {
@@ -126,4 +129,51 @@ public class JpaMain7 {
 
         emf.close();
     }
+
+    static void ex3() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello");
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            /*
+                - Native Query
+                  JPA가 제공하는 SQL을 직접 사용하는 기능
+                  JPQL로 해결할 수 없는 특정 데이터베이스에 의존적인 쿼리를 작성하는데 사용할 수 있다.
+             */
+            List<Player> players = em.createNativeQuery("SELECT id, username, team_id FROM player WHERE username LIKE '%c%'")
+                    .getResultList();
+
+            for (Player player : players) {
+                System.out.println("player = " + player.getName());
+            }
+
+            tx.commit();
+
+            /*
+                - 실행 쿼리
+                 SELECT
+                    id,
+                    username,
+                    team_id
+                 FROM
+                    player
+                 WHERE
+                    username LIKE '%c%'
+             */
+        } catch (Exception e) {
+            tx.rollback();
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
+
+        emf.close();
+    }
+
 }
