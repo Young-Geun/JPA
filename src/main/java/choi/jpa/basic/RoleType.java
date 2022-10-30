@@ -1,4 +1,4 @@
-package choi.jpa.basic1;
+package choi.jpa.basic;
 
 public enum RoleType {
     USER, ADMIN

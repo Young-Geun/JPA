@@ -1,4 +1,4 @@
-package choi.jpa.basic1;
+package choi.jpa.basic;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
