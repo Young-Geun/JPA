@@ -28,7 +28,10 @@ public class JpqlMain {
         //ex7();
 
         // 타입표현 및 표현식 예제
-        ex8();
+        //ex8();
+
+        // 조건식 예제
+        ex9();
     }
 
     static void ex1() {
@@ -412,7 +415,7 @@ public class JpqlMain {
             em.clear();
 
             /** ENUM 사용 예제 */
-            List<Member> adminList = em.createQuery("select m from Member m where m.type = choi.jpa.MemberType.ADMIN", Member.class).getResultList(); // inner 대신 다른 조인방법 사용가능
+            List<Member> adminList = em.createQuery("select m from Member m where m.type = choi.jpa.MemberType.ADMIN", Member.class).getResultList();
             System.out.println(adminList);
             /*
                 [
@@ -432,9 +435,68 @@ public class JpqlMain {
              *  - JPQL 기타 표현식
              *    : SQL과 문법식과 동일하게 EXISTS, IN, AND, OR, NOT, =, >, >=, BETWEEN, LIKE, IS NULL 등을 사용 가능하다.
              */
-            List<Member> betweenList = em.createQuery("select m from Member m where m.age between 5 and 7", Member.class).getResultList(); // inner 대신 다른 조인방법 사용가능
+            List<Member> betweenList = em.createQuery("select m from Member m where m.age between 5 and 7", Member.class).getResultList();
             System.out.println(betweenList);
             // [Member{id=7, username='관리자5', age=5}, Member{id=8, username='유저6', age=6}, Member{id=9, username='관리자7', age=7}]
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void ex9() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Team team = new Team();
+            team.setName(null);
+            em.persist(team);
+
+            for (int i = 5; i < 15; i++) {
+                Member member = new Member();
+                member.setUsername("유저" + i);
+                member.setAge(i);
+                if (i > 13) {
+                    member.setTeam(team);
+                }
+                em.persist(member);
+            }
+
+            em.flush();
+            em.clear();
+
+            /* CASE식 기본 */
+            String query = "select " +
+                    "case when m.age <= 7 then '유치원생' " +
+                    "     when m.age >= 14 then '중학생' " +
+                    "     else '초등학생' " +
+                    "end " +
+                    "from Member m";
+            List<String> list = em.createQuery(query, String.class).getResultList(); // inner 대신 다른 조인방법 사용가능
+            System.out.println(list);
+            // [유치원생, 유치원생, 유치원생, 초등학생, 초등학생, 초등학생, 초등학생, 초등학생, 초등학생, 중학생]
+
+
+            /* COALEASE 기본 */
+            List<Object[]> resultList = em.createQuery("select m.username, coalesce(m.team.name, '무소속') from Member m").getResultList();
+            for (Object[] objects : resultList) {
+                System.out.println(objects[0] + " : " + objects[1]);
+            }
+            // 유저14 : 무소속
 
             tx.commit();
         } catch (Exception e) {
