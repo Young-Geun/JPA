@@ -31,7 +31,10 @@ public class JpqlMain {
         //ex8();
 
         // 조건식 예제
-        ex9();
+        //ex9();
+
+        // 기본함수 예제
+        ex10();
     }
 
     static void ex1() {
@@ -486,7 +489,7 @@ public class JpqlMain {
                     "     else '초등학생' " +
                     "end " +
                     "from Member m";
-            List<String> list = em.createQuery(query, String.class).getResultList(); // inner 대신 다른 조인방법 사용가능
+            List<String> list = em.createQuery(query, String.class).getResultList();
             System.out.println(list);
             // [유치원생, 유치원생, 유치원생, 초등학생, 초등학생, 초등학생, 초등학생, 초등학생, 초등학생, 중학생]
 
@@ -497,6 +500,69 @@ public class JpqlMain {
                 System.out.println(objects[0] + " : " + objects[1]);
             }
             // 유저14 : 무소속
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void ex10() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Team team = new Team();
+            team.setName(null);
+            em.persist(team);
+
+            for (int i = 0; i < 10; i++) {
+                Member member = new Member();
+                member.setUsername("유저" + i);
+                member.setAge(i);
+                member.setTeam(team);
+                em.persist(member);
+            }
+
+            em.flush();
+            em.clear();
+
+            /** JPQL 기본함수 */
+            String query = "select m.username || ':' || m.age  from Member m";
+            List<String> list = em.createQuery(query, String.class).getResultList();
+            System.out.println(list);
+            // [유저0:0, 유저1:1, 유저2:2, 유저3:3, 유저4:4, 유저5:5, 유저6:6, 유저7:7, 유저8:8, 유저9:9]
+            // 기본 함수 종류 : CONCAT, SUBSTRING, TRIM, LOWER, UPPER, LENGTH, LOCATE 등등
+
+
+
+            /** JPA 제공 함수 */
+            int memberSize = em.createQuery("select size(t.members) from Team t", Integer.class).getSingleResult().intValue();
+            System.out.println(memberSize);
+            // 10
+            // JPA 제공 함수 종류 : size, index
+
+
+
+            /** 사용자 정의 함수 (*group_concat = 다수의 컬럼 값을 하나의 문자열로 합치는 함수) */
+            List<String> memberList = em.createQuery("select function('group_concat', m.username) from Member m", String.class).getResultList();
+            System.out.println(memberList.size()); // 1
+            for (String s : memberList) {
+                System.out.println(s);
+            }
+            // 유저0,유저1,유저2,유저3,유저4,유저5,유저6,유저7,유저8,유저9
 
             tx.commit();
         } catch (Exception e) {
