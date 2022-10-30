@@ -22,7 +22,10 @@ public class JpqlMain {
         //ex5();
 
         // 조인 예제
-        ex6();
+        //ex6();
+
+        // 서브쿼리 예제
+        ex7();
     }
 
     static void ex1() {
@@ -294,6 +297,70 @@ public class JpqlMain {
                 inner join
                     Team team1_
                         on member0_.TEAM_ID=team1_.id
+             */
+
+            tx.commit();
+        } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void ex7() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            /** 쿼리 예시 */
+            /*
+                - 나이가 평균보다 많은 회원
+                  : select m from Member m where m.age > (select avg(m2.age) from Member m2)
+
+                - 한 건 이라도 주문한 고객
+                  : select m from Member m where (select count(o) from Order o where m = o.member) > 0
+
+                - 나이가 평균보다 많은 회원
+                  : select m from Member m where m.age > (select avg(m2.age) from Member m2)
+             */
+
+
+            /** 서브 쿼리 지원 함수 */
+            /*
+                - [NOT] EXISTS (subquery): 서브쿼리에 결과가 존재하면 참
+                - {ALL | ANY | SOME} (subquery)
+                    : ALL = 모두 만족하면 참
+                    : ANY, SOME = 같은 의미, 조건을 하나라도 만족하면 참
+
+                 ------------------------------ 예시 ------------------------------
+
+                - 팀A 소속인 회원
+                  : select m from Member m where exists (select t from m.team t where t.name = ‘팀A')
+
+                - 전체 상품 각각의 재고보다 주문량이 많은 주문들
+                  : select o from Order o where o.orderAmount > ALL (select p.stockAmount from Product p)
+
+                - 어떤 팀이든 팀에 소속된 회원
+                  : select m from Member m where m.team = ANY (select t from Team t)
+             */
+
+
+            /** 한계점 */
+            /*
+                - JPA 서브 쿼리의 한계
+                    1. JPA는 WHERE, HAVING 절에서만 서브쿼리 사용 가능 (JPA 표준 스펙)
+                    2. 하지만 SELECT절도 가능(하이버네이트에서 지원해주기 때문)
+                    3. FROM 절의 서브 쿼리는 현재 JPQL에서 불가능(2022-10-30 기준)
              */
 
             tx.commit();
