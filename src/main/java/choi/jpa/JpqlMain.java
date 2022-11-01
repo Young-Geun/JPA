@@ -1,6 +1,7 @@
 package choi.jpa;
 
 import javax.persistence.*;
+import java.util.Collection;
 import java.util.List;
 
 public class JpqlMain {
@@ -34,7 +35,10 @@ public class JpqlMain {
         //ex9();
 
         // 기본함수 예제
-        ex10();
+        //ex10();
+
+        // 경로 표현식
+        ex11();
     }
 
     static void ex1() {
@@ -566,6 +570,79 @@ public class JpqlMain {
 
             tx.commit();
         } catch (Exception e) {
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void ex11() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Team team = new Team();
+            team.setName("TEAM-A");
+            em.persist(team);
+
+            for (int i = 0; i < 10; i++) {
+                Member member = new Member();
+                member.setUsername("유저" + i);
+                member.setAge(i);
+                member.setTeam(team);
+                em.persist(member);
+            }
+
+            em.flush();
+            em.clear();
+
+            /*
+                - 상태 필드
+                Ex) m.username
+                : 경로의 끝(username 다음에 .을 찍고 더 이상 들어갈 곳이 없음)
+             */
+            String query = "select m.username from Member m";
+            List<String> list1 = em.createQuery(query, String.class).getResultList();
+
+            /*
+                - 단일 값 연관 경로
+                Ex) m.team
+                : 경로의 끝이 아닌 탐색 가능(team 다음에 .을 찍고 더 이상 들어갈 곳이 있음. m.team.name 등 )
+                : 주의! 묵시적 내부 조인이 발생한다.(실제 쿼리는 Member과 Team 테이블의 조인이 발생한다.)
+             */
+            query = "select m.team from Member m";
+            List<Team> list2 = em.createQuery(query, Team.class).getResultList();
+
+
+            /*
+                - 컬렉션 값 연관 관계
+                Ex) t.members
+                : 경로의 끝(.을 찍고 더 이상 들어갈 곳이 없음)
+                : 주의! 묵시적 내부 조인이 발생한다.(실제 쿼리는 Member과 Team 테이블의 조인이 발생한다.)
+             */
+            query = "select t.members from Team t";
+            Collection result = em.createQuery(query, Collection.class).getResultList();
+            System.out.println(result);
+
+
+            /**
+             *  정리 : 묵시적 방법은 코드와 실제 쿼리를 명확하게 알 수 없기 때문에 좋은 방법이 아니다.
+             *        join 키워드를 사용하여 명시적 조인을 하는게 바람직한 코딩 방식이다.
+             */
+
+            tx.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
             tx.rollback();
         } finally {
             // 자원반환
