@@ -41,7 +41,10 @@ public class JpqlMain {
         //ex11();
 
         // 페치조인 예제
-        ex12();
+        //ex12();
+
+        // 페치조인 - DISTINCT 예제
+        ex13();
     }
 
     static void ex1() {
@@ -759,6 +762,112 @@ public class JpqlMain {
                             on member0_.TEAM_ID=team1_.id
 
                 ===> 쿼리가 총 1번 수행된다.
+             */
+
+            tx.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void ex13() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Team teamA = new Team();
+            teamA.setName("TEAM-A");
+            em.persist(teamA);
+            for (int i = 0; i < 3; i++) {
+                Member member = new Member();
+                member.setUsername("유저" + i);
+                member.setAge(i);
+                member.setTeam(teamA);
+                em.persist(member);
+            }
+
+            Team teamB = new Team();
+            teamB.setName("TEAM-B");
+            em.persist(teamB);
+            for (int i = 3; i < 5; i++) {
+                Member member = new Member();
+                member.setUsername("유저" + i);
+                member.setAge(i);
+                member.setTeam(teamB);
+                em.persist(member);
+            }
+
+            em.flush();
+            em.clear();
+
+            String query = "select t from Team t join fetch t.members";
+            List<Team> teamList = em.createQuery(query, Team.class).getResultList();
+            for (Team t : teamList) {
+                System.out.println("team.name = " + t.getName() + ", member.size = " + t.getMembers().size());
+                for (Member m : t.getMembers()) {
+                    System.out.println("-----> member.name = " + m.getUsername());
+                }
+            }
+            /*
+                team.name = TEAM-A, member.size = 3
+                -----> member.name = 유저0
+                -----> member.name = 유저1
+                -----> member.name = 유저2
+                team.name = TEAM-A, member.size = 3
+                -----> member.name = 유저0
+                -----> member.name = 유저1
+                -----> member.name = 유저2
+                team.name = TEAM-A, member.size = 3
+                -----> member.name = 유저0
+                -----> member.name = 유저1
+                -----> member.name = 유저2
+                team.name = TEAM-B, member.size = 2
+                -----> member.name = 유저3
+                -----> member.name = 유저4
+                team.name = TEAM-B, member.size = 2
+                -----> member.name = 유저3
+                -----> member.name = 유저4
+
+
+                ==> 중복 데이터 존재. (JOIN 하면서 데이터가 뻥튀기 됨)
+                    JPA의 DISTINCT를 사용하면,
+                    1. SQL에 DISTINCT도 추가되고, (위의 경우에는 SQL에 DISTINCT가 추가되어도 데이터가 제거되지 않음. 실제 값이 다르게 조회되기 때문)
+                    2. 중복 엔티티도 제거된다.
+             */
+
+
+            query = "select distinct t from Team t join fetch t.members";
+            teamList = em.createQuery(query, Team.class).getResultList();
+            for (Team t : teamList) {
+                System.out.println("team.name = " + t.getName() + ", member.size = " + t.getMembers().size());
+                for (Member m : t.getMembers()) {
+                    System.out.println("-----> member.name = " + m.getUsername());
+                }
+            }
+            /*
+                team.name = TEAM-A, member.size = 3
+                -----> member.name = 유저0
+                -----> member.name = 유저1
+                -----> member.name = 유저2
+                team.name = TEAM-B, member.size = 2
+                -----> member.name = 유저3
+                -----> member.name = 유저4
+
+
+               ==> 위의 데이터와 다르게 중복이 제거된 것을 볼 수 있다.
              */
 
             tx.commit();
