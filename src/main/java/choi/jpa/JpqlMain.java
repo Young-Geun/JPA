@@ -37,8 +37,11 @@ public class JpqlMain {
         // 기본함수 예제
         //ex10();
 
-        // 경로 표현식
-        ex11();
+        // 경로 표현식 예제
+        //ex11();
+
+        // 페치조인 예제
+        ex12();
     }
 
     static void ex1() {
@@ -638,6 +641,124 @@ public class JpqlMain {
             /**
              *  정리 : 묵시적 방법은 코드와 실제 쿼리를 명확하게 알 수 없기 때문에 좋은 방법이 아니다.
              *        join 키워드를 사용하여 명시적 조인을 하는게 바람직한 코딩 방식이다.
+             */
+
+            tx.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void ex12() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Team teamA = new Team();
+            teamA.setName("TEAM-A");
+            em.persist(teamA);
+            for (int i = 0; i < 3; i++) {
+                Member member = new Member();
+                member.setUsername("유저" + i);
+                member.setAge(i);
+                member.setTeam(teamA);
+                em.persist(member);
+            }
+
+            Team teamB = new Team();
+            teamB.setName("TEAM-B");
+            em.persist(teamB);
+            for (int i = 3; i < 5; i++) {
+                Member member = new Member();
+                member.setUsername("유저" + i);
+                member.setAge(i);
+                member.setTeam(teamB);
+                em.persist(member);
+            }
+
+            em.flush();
+            em.clear();
+
+            /** 일반적인 조회 방식 */
+            String query = "select m from Member m";
+            List<Member> memberList = em.createQuery(query, Member.class).getResultList();
+            for (Member m : memberList) {
+                System.out.println("member.name = " + m.getUsername() + ", team.name = " + m.getTeam().getName());
+            }
+            /*
+                Hibernate:
+                    select
+                        member0_.id as id1_0_,
+                        member0_.age as age2_0_,
+                        member0_.TEAM_ID as TEAM_ID5_0_,
+                        member0_.type as type3_0_,
+                        member0_.username as username4_0_
+                    from
+                        Member member0_
+
+                Hibernate:
+                    select
+                        team0_.id as id1_3_0_,
+                        team0_.name as name2_3_0_
+                    from
+                        Team team0_
+                    where
+                        team0_.id=?
+
+                Hibernate:
+                    select
+                        team0_.id as id1_3_0_,
+                        team0_.name as name2_3_0_
+                    from
+                        Team team0_
+                    where
+                        team0_.id=?
+
+
+                ===> 쿼리가 총 3번 수행된다.
+             */
+
+
+            /** fetch join 사용 방식 */
+            System.out.println("============== fetch join 사용 ==============");
+            em.flush();
+            em.clear();
+
+            query = "select m from Member m join fetch m.team";
+            memberList = em.createQuery(query, Member.class).getResultList();
+            for (Member m : memberList) {
+                System.out.println("member.name = " + m.getUsername() + ", team.name = " + m.getTeam().getName());
+            }
+            /*
+                Hibernate:
+                    select
+                        member0_.id as id1_0_0_,
+                        team1_.id as id1_3_1_,
+                        member0_.age as age2_0_0_,
+                        member0_.TEAM_ID as TEAM_ID5_0_0_,
+                        member0_.type as type3_0_0_,
+                        member0_.username as username4_0_0_,
+                        team1_.name as name2_3_1_
+                    from
+                        Member member0_
+                    inner join
+                        Team team1_
+                            on member0_.TEAM_ID=team1_.id
+
+                ===> 쿼리가 총 1번 수행된다.
              */
 
             tx.commit();
