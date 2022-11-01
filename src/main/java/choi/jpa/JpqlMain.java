@@ -44,7 +44,10 @@ public class JpqlMain {
         //ex12();
 
         // 페치조인 - DISTINCT 예제
-        ex13();
+        //ex13();
+
+        // 페치조인의 한계 예제
+        ex14();
     }
 
     static void ex1() {
@@ -868,6 +871,100 @@ public class JpqlMain {
 
 
                ==> 위의 데이터와 다르게 중복이 제거된 것을 볼 수 있다.
+             */
+
+            tx.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void ex14() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Team teamA = new Team();
+            teamA.setName("TEAM-A");
+            em.persist(teamA);
+            for (int i = 0; i < 3; i++) {
+                Member member = new Member();
+                member.setUsername("유저" + i);
+                member.setAge(i);
+                member.setTeam(teamA);
+                em.persist(member);
+            }
+
+            Team teamB = new Team();
+            teamB.setName("TEAM-B");
+            em.persist(teamB);
+            for (int i = 3; i < 5; i++) {
+                Member member = new Member();
+                member.setUsername("유저" + i);
+                member.setAge(i);
+                member.setTeam(teamB);
+                em.persist(member);
+            }
+
+            em.flush();
+            em.clear();
+
+            // fetch 조인의 한계 - 페이징 사용 못함
+            String query = "select distinct t from Team t join fetch t.members";
+            List<Team> teamList = em.createQuery(query, Team.class)
+                    .setFirstResult(0)
+                    .setMaxResults(1)
+                    .getResultList();
+
+            for (Team t : teamList) {
+                System.out.println("team.name = " + t.getName());
+            }
+            /*
+                WARN: HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
+                Hibernate:
+                        select
+                            distinct team0_.id as id1_3_0_,
+                                    members1_.id as id1_0_1_,
+                            team0_.name as name2_3_0_,
+                                    members1_.age as age2_0_1_,
+                            members1_.TEAM_ID as TEAM_ID5_0_1_,
+                                    members1_.type as type3_0_1_,
+                            members1_.username as username4_0_1_,
+                                    members1_.TEAM_ID as TEAM_ID5_0_0__,
+                            members1_.id as id1_0_0__
+                        from
+                            Team team0_
+                        inner join
+                            Member members1_
+                                on team0_.id=members1_.TEAM_ID
+
+
+               ==> fetch 조인 시 페이징을 사용할 경우, 아래의 경고 메시지 발생
+                   - WARN: HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
+
+                   : 또한 쿼리를 보면 페이징을 하지 않고 있다.
+                     메모리에서 페이징을 하기 모든 데이터를 메모리로 올리기 때문에 장애를 초래할 수 있다.
+             */
+
+
+            /**
+             *  기타 한계점
+             *
+             *  1. 페치 조인 대상에는 별칭을 줄 수 없다. (하이버네이트에서는 가능하지만 가급적 사용x)
+             *  2. 둘 이상의 컬렉션은 페치 조인할 수 있다. (가능할 수도 있으나 데이터 정합성을 보장할 수 없음)
              */
 
             tx.commit();
