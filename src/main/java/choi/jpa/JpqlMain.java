@@ -47,7 +47,10 @@ public class JpqlMain {
         //ex13();
 
         // 페치조인의 한계 예제
-        ex14();
+        //ex14();
+
+        // 엔티티 직접 사용 - 기본키
+        ex15();
     }
 
     static void ex1() {
@@ -966,6 +969,80 @@ public class JpqlMain {
              *  1. 페치 조인 대상에는 별칭을 줄 수 없다. (하이버네이트에서는 가능하지만 가급적 사용x)
              *  2. 둘 이상의 컬렉션은 페치 조인할 수 있다. (가능할 수도 있으나 데이터 정합성을 보장할 수 없음)
              */
+
+            tx.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void ex15() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Member member = new Member();
+            member.setUsername("유저 1");
+            member.setAge(10);
+            em.persist(member);
+
+            em.flush();
+            em.clear();
+
+            /*
+                - JPQL에서 엔티티를 직접 사용하면 SQL에서 해당 엔티티의 기본 키 값을 사용
+                  : 따라서 아래 두 개의 JPQL은 같은 SQL이 실행된다.
+                    JPQL 1. slect count(m.id) from Member m
+                    JPQL 2. slect count(m) from Member m
+
+                    ==> 실제 수행 쿼리 : select count(m.id) as cnt from member m
+             */
+            // 테스트 코드 생략
+
+
+
+            /*
+                - 파라미터로 전달 예제
+                  : 아래의 두 코드 모두 같은 쿼리가 실행된다.
+                    select
+                        member0_.id as id1_0_,
+                        member0_.age as age2_0_,
+                        member0_.TEAM_ID as TEAM_ID5_0_,
+                        member0_.type as type3_0_,
+                        member0_.username as username4_0_
+                    from
+                        Member member0_
+                    where
+                        member0_.id=?
+
+             */
+            String query = "select m from Member m where m = :member";
+            List<Member> memberList = em.createQuery(query, Member.class)
+                    .setParameter("member", member)
+                    .getResultList();
+            System.out.println("memberList #1 = " + memberList); // memberList #1 = [Member{id=1, username='유저 1', age=10}]
+
+            em.flush();
+            em.clear();
+
+            query = "select m from Member m where m.id = :memberId";
+            memberList = em.createQuery(query, Member.class)
+                    .setParameter("memberId", member.getId())
+                    .getResultList();
+            System.out.println("memberList #2= " + memberList); // memberList #2= [Member{id=1, username='유저 1', age=10}]
 
             tx.commit();
         } catch (Exception e) {
