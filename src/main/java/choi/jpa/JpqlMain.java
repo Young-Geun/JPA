@@ -50,7 +50,10 @@ public class JpqlMain {
         //ex14();
 
         // 엔티티 직접 사용 - 기본키
-        ex15();
+        //ex15();
+
+        // Named 쿼리
+        ex16();
     }
 
     static void ex1() {
@@ -1043,6 +1046,56 @@ public class JpqlMain {
                     .setParameter("memberId", member.getId())
                     .getResultList();
             System.out.println("memberList #2= " + memberList); // memberList #2= [Member{id=1, username='유저 1', age=10}]
+
+            tx.commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            tx.rollback();
+        } finally {
+            // 자원반환
+            em.close();
+        }
+
+        // 자원반환
+        emf.close();
+    }
+
+    static void ex16() {
+        // 선언
+        EntityManagerFactory emf
+                = Persistence.createEntityManagerFactory("hello"); // persistence.xml의 persistence-unit의 name
+        EntityManager em = emf.createEntityManager();
+
+        // 트랜잭션 선언 및 시작
+        EntityTransaction tx = em.getTransaction();
+        tx.begin();
+
+        try {
+            Member member1 = new Member();
+            member1.setUsername("유저 1");
+            member1.setAge(10);
+            em.persist(member1);
+
+            Member member2 = new Member();
+            member2.setUsername("유저 2");
+            member2.setAge(10);
+            em.persist(member2);
+
+            em.flush();
+            em.clear();
+
+            /*
+                - Named 쿼리
+                  : 미리 정의해서 이름을 부여해두고 사용하는 JPQL
+                  : 동적 쿼리를 만들지 못한다.
+                  : 로딩 시점에 초기화 후 재사용한다.
+                  : 애플리케이션 로딩 시점에 쿼리를 검증한다.
+                  : 어노테이션 또는 XML에 정의 가능하며, XML이 우선권을 가진다. (xml에 정의할 경우, 배포방식에 따라 분기처리 할 수 있는 장점이 있다.)
+             */
+            List<Member> memberList = em.createNamedQuery("Member.findByUsername")
+                    .setParameter("username", "유저 1")
+                    .getResultList();
+            System.out.println(memberList); // [Member{id=1, username='유저 1', age=10}]
 
             tx.commit();
         } catch (Exception e) {
