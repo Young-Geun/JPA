@@ -17,6 +17,13 @@ public class ItemRepository {
         if (item.getId() == null) {
             em.persist(item);
         } else {
+            /**
+             * 준영속 엔티티를 수정하는 방법 : merge 사용
+             * - merge 사용 시 주의사항
+             *   : 변경감지 기능을 사용하면 원하는 속성만 변경할 수 있지만,
+             *     병합을 사용하면 모든 속성이 변경되기 때문에
+             *     값이 없으면 null로 업데이트 될 수도 있다.
+             */
             em.merge(item);
         }
     }
