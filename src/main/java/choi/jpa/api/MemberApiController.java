@@ -30,6 +30,18 @@ public class MemberApiController {
         return new CreateMemberResponse(id);
     }
 
+    /**
+     * 등록 V2 : 별도의 DTO를 사용한다.
+     */
+    @PostMapping("/api/v2/members")
+    public CreateMemberResponse saveMemberV2(@RequestBody @Valid CreateMemberRequest request) {
+        Member member = new Member();
+        member.setName(request.getName());
+
+        Long id = memberService.join(member);
+        return new CreateMemberResponse(id);
+    }
+
     @Data
     static class CreateMemberResponse {
         private Long id;
@@ -38,4 +50,10 @@ public class MemberApiController {
             this.id = id;
         }
     }
+
+    @Data
+    static class CreateMemberRequest {
+        private String name;
+    }
+
 }
