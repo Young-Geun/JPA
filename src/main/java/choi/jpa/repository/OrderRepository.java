@@ -26,7 +26,7 @@ public class OrderRepository {
     }
 
     // 동적쿼리 생성 방법 1. 조건에 따라 쿼리 조립
-    public List<javax.persistence.criteria.Order> findAllByString(OrderSearch orderSearch) {
+    public List<Order> findAllByString(OrderSearch orderSearch) {
 
         String jpql = "select o from Order o join o.member m";
         boolean isFirstCondition = true;
@@ -53,7 +53,7 @@ public class OrderRepository {
             jpql += " m.name like :name";
         }
 
-        TypedQuery<javax.persistence.criteria.Order> query = em.createQuery(jpql, javax.persistence.criteria.Order.class)
+        TypedQuery<Order> query = em.createQuery(jpql, Order.class)
                 .setMaxResults(1000);
 
         if (orderSearch.getOrderStatus() != null) {
