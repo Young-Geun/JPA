@@ -1,12 +1,18 @@
 package choi.jpa.api;
 
+import choi.jpa.domain.Address;
 import choi.jpa.domain.Order;
+import choi.jpa.domain.OrderStatus;
 import choi.jpa.repository.*;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.List;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  *
@@ -39,6 +45,38 @@ public class OrderSimpleApiController {
         }
 
         return all;
+    }
+
+    /**
+     * V2. 엔티티를 조회해서 DTO로 변환(fetch join 사용X)
+     *     : 지연로딩으로 쿼리가 N번 호출된다는 단점이 있다
+     */
+    @GetMapping("/api/v2/simple-orders")
+    public List<SimpleOrderDto> ordersV2() {
+        List<Order> orders = orderRepository.findAllByString(new OrderSearch());
+        List<SimpleOrderDto> result = orders.stream()
+                .map(o -> new SimpleOrderDto(o))
+                .collect(toList());
+
+        return result;
+    }
+
+    @Data
+    static class SimpleOrderDto {
+
+        private Long orderId;
+        private String name;
+        private LocalDateTime orderDate; // 주문시간
+        private OrderStatus orderStatus;
+        private Address address;
+
+        public SimpleOrderDto(Order order) {
+            orderId = order.getId();
+            name = order.getMember().getName();
+            orderDate = order.getOrderDate();
+            orderStatus = order.getStatus();
+            address = order.getDelivery().getAddress();
+        }
     }
 
 }
