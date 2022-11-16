@@ -4,6 +4,8 @@ import choi.jpa.domain.Address;
 import choi.jpa.domain.Order;
 import choi.jpa.domain.OrderStatus;
 import choi.jpa.repository.*;
+import choi.jpa.repository.order.simplequery.OrderSimpleQueryDto;
+import choi.jpa.repository.order.simplequery.OrderSimpleQueryRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +29,8 @@ import static java.util.stream.Collectors.toList;
 public class OrderSimpleApiController {
 
     private final OrderRepository orderRepository;
+
+    private final OrderSimpleQueryRepository orderSimpleQueryRepository;
 
     /**
      * V1. 엔티티 직접 노출
@@ -73,6 +77,14 @@ public class OrderSimpleApiController {
                 .collect(toList());
 
         return result;
+    }
+
+    /**
+     * V4. JPA에서 DTO로 바로 조회
+     */
+    @GetMapping("/api/v4/simple-orders")
+    public List<OrderSimpleQueryDto> ordersV4() {
+        return orderSimpleQueryRepository.findOrderDtos();
     }
 
     @Data
