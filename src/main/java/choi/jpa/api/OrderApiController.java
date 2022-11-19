@@ -64,6 +64,23 @@ public class OrderApiController {
         return result;
     }
 
+    /**
+     * V3. 엔티티를 조회해서 DTO로 변환(fetch join 사용O)
+     *     - 페이징 시에는 N 부분을 포기해야함(대신에 batch fetch size? 옵션 주면 N -> 1 쿼리로 변경 가능)
+     *     - 페이징 시 주의사항
+     *       : 실제 수행된 쿼리를보면 페이징을 하고 있지 않다.
+     *         -> 모든 데이터를 가져온 후 메모리에 담은 후 페이징을 한다. (메모리에서 페이징을 하므로 위험함)
+     */
+    @GetMapping("/api/v3/orders")
+    public List<OrderDto> ordersV3() {
+        List<Order> orders = orderRepository.findAllWithItem();
+        List<OrderDto> result = orders.stream()
+                .map(o -> new OrderDto(o))
+                .collect(toList());
+
+        return result;
+    }
+
     @Data
     static class OrderDto {
         private Long orderId;

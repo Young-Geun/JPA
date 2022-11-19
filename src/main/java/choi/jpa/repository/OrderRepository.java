@@ -99,5 +99,19 @@ public class OrderRepository {
                 .getResultList();
     }
 
+    public List<Order> findAllWithItem() {
+        /*
+            distinct를 사용하지 않으면 order에 대한 데이터가 orderItems에 의해 뻥튀기 될 수 있음.
+            * DB의 distinct와는 차이가 있음. 실행되는 쿼리를 확인해보면 알 수 있음
+         */
+        return em.createQuery(
+                        "select distinct o from Order o" +
+                                " join fetch o.member m" +
+                                " join fetch o.delivery d" +
+                                " join fetch o.orderItems oi" +
+                                " join fetch oi.item i", Order.class)
+                .getResultList();
+    }
+
 }
 
