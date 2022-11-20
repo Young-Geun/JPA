@@ -6,6 +6,8 @@ import choi.jpa.domain.OrderItem;
 import choi.jpa.domain.OrderStatus;
 import choi.jpa.repository.OrderRepository;
 import choi.jpa.repository.OrderSearch;
+import choi.jpa.repository.order.query.OrderQueryDto;
+import choi.jpa.repository.order.query.OrderQueryRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +32,7 @@ import static java.util.stream.Collectors.toList;
 public class OrderApiController {
 
     private final OrderRepository orderRepository;
+    private final OrderQueryRepository orderQueryRepository;
 
     /**
      * V1. 엔티티 직접 노출
@@ -96,6 +99,15 @@ public class OrderApiController {
                 .collect(toList());
 
         return result;
+    }
+
+    /**
+     * V4. JPA에서 DTO로 바로 조회, 컬렉션 N 조회 (1 + N Query)
+     *      - 페이징 가능
+     */
+    @GetMapping("/api/v4/orders")
+    public List<OrderQueryDto> ordersV4() {
+        return orderQueryRepository.findOrderQueryDtos();
     }
 
     @Data
