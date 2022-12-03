@@ -1,6 +1,8 @@
 package choi.jpa.repository;
 
+import choi.jpa.dto.MemberDto;
 import choi.jpa.entity.Member;
+import choi.jpa.entity.Team;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,9 @@ class MemberRepositoryTest {
 
     @Autowired
     MemberRepository memberRepository;
+
+    @Autowired
+    TeamRepository teamRepository;
 
     @Test
     public void testMember() {
@@ -97,6 +102,34 @@ class MemberRepositoryTest {
         Assertions.assertThat(result.get(0).getUsername()).isEqualTo("AAA");
         Assertions.assertThat(result.get(0).getAge()).isEqualTo(10);
         Assertions.assertThat(result.size()).isEqualTo(1);
+    }
+
+    @Test
+    public void findUsernameList() {
+        Member m1 = new Member("AAA", 10);
+        Member m2 = new Member("BBB", 20);
+        memberRepository.save(m1);
+        memberRepository.save(m2);
+
+        List<String> result = memberRepository.findUsernameList();
+        for (String s : result) {
+            System.out.println(s);
+        }
+    }
+
+    @Test
+    public void findMemberDto() {
+        Team team = new Team("teamA");
+        teamRepository.save(team);
+
+        Member m1 = new Member("AAA", 10);
+        m1.setTeam(team);
+        memberRepository.save(m1);
+
+        List<MemberDto> result = memberRepository.findMemberDto();
+        for (MemberDto dto : result) {
+            System.out.println(dto);
+        }
     }
 
 }
