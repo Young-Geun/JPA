@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @SpringBootTest
 @Transactional
@@ -151,6 +152,32 @@ class MemberRepositoryTest {
         for (Member member : result) {
             System.out.println("member = " + member);
         }
+    }
+
+    @Test
+    public void returnType() {
+        Member m1 = new Member("AAA", 10);
+        Member m2 = new Member("BBB", 20);
+
+        memberRepository.save(m1);
+        memberRepository.save(m2);
+
+        List<Member> list = memberRepository.findMembersByUsername("AAA");
+        for (Member member : list) {
+            System.out.println("member = " + member);
+        }
+
+        Member member1 = memberRepository.findMemberByUsername("AAA");
+        System.out.println("member1 = " + member1); // member1 = Member(id=1, username=AAA, age=10)
+
+        Optional<Member> member2 = memberRepository.findOptionalByUsername("AAA");
+        System.out.println("member2 = " + member2); // member2 = Optional[Member(id=1, username=AAA, age=10)]
+
+        Member member3 = memberRepository.findMemberByUsername("AAAD");
+        System.out.println("member3 = " + member3); // member3 = null
+
+        Optional<Member> member4 = memberRepository.findOptionalByUsername("AAAD");
+        System.out.println("member4 = " + member4); // member4 = Optional.empty
     }
 
 }
