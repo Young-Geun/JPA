@@ -14,6 +14,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +30,9 @@ class MemberRepositoryTest {
 
     @Autowired
     TeamRepository teamRepository;
+
+    @PersistenceContext
+    private EntityManager em;
 
     @Test
     public void testMember() {
@@ -226,6 +231,43 @@ class MemberRepositoryTest {
         Assertions.assertThat(page.getNumber()).isEqualTo(0); // 페이지 번호
         Assertions.assertThat(page.isFirst()).isTrue(); // 첫번째 항목인가?
         Assertions.assertThat(page.hasNext()).isTrue(); // 다음 페이지가 있는가?
+    }
+
+    @Test
+    public void bulkUpdate() throws Exception {
+        //given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 19));
+        memberRepository.save(new Member("member3", 20));
+        memberRepository.save(new Member("member4", 21));
+        memberRepository.save(new Member("member5", 40));
+
+        //when
+        int resultCount = memberRepository.bulkAgePlus(20);
+
+        // em.flush();
+        // em.clear();
+
+        List<Member> members = memberRepository.findByUsername("member5");
+        System.out.println("member = " + members.get(0));
+        /*
+            콘솔 로그 결과
+
+            1. em.flush(); 와 em.clear();를 실행시켰을 경우
+               : member = Member(id=5, username=member5, age=41)
+
+            2. em.flush(); 와 em.clear();를 실행하지 않았을 경우
+               : member = Member(id=5, username=member5, age=40)
+
+            ==> 벌크 연산은 영속성 컨텍스트를 무시하고 실행하기 때문에,
+                영속성 컨텍스트에 있는 엔티티의 상태와 DB에 엔티티 상태가 달라질 수 있다.
+
+            ** em.flush(); 와 em.clear(); 사용 대신에
+               영속성 컨텍스트 초기화 옵션[@Modifying(clearAutomatically = true)]으로 대체 가능하다. (이 옵션의 기본값은 false)
+         */
+
+        //then
+        Assertions.assertThat(resultCount).isEqualTo(3);
     }
 
 }
