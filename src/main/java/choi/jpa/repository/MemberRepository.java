@@ -2,6 +2,9 @@ package choi.jpa.repository;
 
 import choi.jpa.dto.MemberDto;
 import choi.jpa.entity.Member;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -35,5 +38,13 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Optional<Member> findOptionalByUsername(String name); // 단건 Optional
     /* 반환타입 예제 End */
+
+    Page<Member> findByAge(int age, Pageable pageable);
+
+    Slice<Member> findSliceByAge(int age, Pageable pageable);
+
+    // 카운트 쿼리 분리해서 페이징하는 방법
+    @Query(value = "select m from Member m left join m.team t", countQuery = "select count(m.username) from Member m")
+    Page<Member> findMemberAllCountBy(Pageable pageable);
 
 }
