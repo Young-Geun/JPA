@@ -270,4 +270,92 @@ class MemberRepositoryTest {
         Assertions.assertThat(resultCount).isEqualTo(3);
     }
 
+    @Test
+    public void findMemberLazy() throws Exception {
+        /*
+            @EntityGraph 예제
+
+            - 현재 코드에 대해서는 @EntityGraph가 적용되어있어서
+              아래의 코드를 실행할 때 주석과 다르게 1번의 쿼리를 통해 데이터를 가지고 온다.
+              하지만 @EntityGraph를 사용하지 않을 경우, 아래의 주석처럼 동작한다.
+              이는 중간에서 볼 수 있듯이 N+1 문제를 야기할 수도 있으며,
+              이를 해결하고자 fetch조인을 사용하였다.
+              하지만 매 코드를 fetch조인으로 사용할 수 없으니, @EntityGraph를 사용하여 해결하였다.
+         */
+
+        //given
+        //member1는 teamA와 연관
+        //member2는 teamB와 연관
+        Team teamA = new Team("teamA");
+        Team teamB = new Team("teamB");
+        teamRepository.save(teamA);
+        teamRepository.save(teamB);
+
+        memberRepository.save(new Member("member1", 10, teamA));
+        memberRepository.save(new Member("member2", 20, teamB));
+
+        em.flush();
+        em.clear();
+
+        //when
+        List<Member> members = memberRepository.findAll();
+
+        //then
+        for (Member member : members) {
+            System.out.println("member = " + member.getUsername());
+        }
+        /*
+            select
+                member0_.member_id as member_i1_0_,
+                member0_.age as age2_0_,
+                member0_.team_id as team_id4_0_,
+                member0_.username as username3_0_
+            from
+                member member0_
+
+            ==> 사용자를 가져오는 쿼리 1번 수행
+         */
+
+
+        for (Member member : members) {
+            System.out.println("member.team = " + member.getTeam().getName());
+        }
+        /*
+            select
+                team0_.team_id as team_id1_1_0_,
+                team0_.name as name2_1_0_
+            from
+                team team0_
+            where
+                team0_.team_id=?
+
+            ==> 팀을 가져오는 쿼리 2번 수행(위의 쿼리 2번 실행됨) --> N + 1 문제 발생
+                * 팀을 실제 가져올 때(=member.getTeam().getName()) 쿼리가 수행됨
+
+                :
+         */
+
+
+        List<Member> members2 = memberRepository.findMemberFetchJoin();
+        for (Member member : members2) {
+            System.out.println("#2 member.team = " + member.getTeam().getName());
+        }
+        /*
+            select
+                member0_.member_id as member_i1_0_0_,
+                team1_.team_id as team_id1_1_1_,
+                member0_.age as age2_0_0_,
+                member0_.team_id as team_id4_0_0_,
+                member0_.username as username3_0_0_,
+                team1_.name as name2_1_1_
+            from
+                member member0_
+            left outer join
+                team team1_
+                    on member0_.team_id=team1_.team_id
+
+            ==> fetch조인을 사용하면 위의 케이스와 다르게 한 번의 조회로 가져온다.
+         */
+    }
+
 }
