@@ -396,4 +396,13 @@ class MemberRepositoryTest {
          */
     }
 
+    @Test
+    public void callCustom() {
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 19));
+
+        List<Member> members = memberRepository.findMemberCustom();
+        System.out.println("members = " + members);
+    }
+
 }
