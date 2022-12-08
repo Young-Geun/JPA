@@ -1,8 +1,11 @@
 package choi.jpa.controller;
 
+import choi.jpa.dto.MemberDto;
 import choi.jpa.entity.Member;
 import choi.jpa.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,7 +20,9 @@ public class MemberController {
 
     @PostConstruct
     public void init() {
-        memberRepository.save(new Member("userA"));
+        for (int i = 0; i < 100; i++) {
+            memberRepository.save(new Member("user_" + i, i));
+        }
     }
 
     // 도메인 클래스 컨버터 사용 전
@@ -31,6 +36,11 @@ public class MemberController {
     @GetMapping("/members2/{id}")
     public String findMember2(@PathVariable("id") Member member) {
         return member.getUsername();
+    }
+
+    @GetMapping("/members")
+    public Page<MemberDto> list(Pageable pageable) {
+        return memberRepository.findAll(pageable).map(MemberDto::new);
     }
 
 }
