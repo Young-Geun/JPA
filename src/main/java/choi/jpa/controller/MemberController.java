@@ -1,4 +1,4 @@
-package choi.jpa;
+package choi.jpa.controller;
 
 import choi.jpa.entity.Member;
 import choi.jpa.repository.MemberRepository;
