@@ -71,4 +71,6 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
 
     List<UsernameOnly> findProjectionsByUsername(@Param("username") String username);
 
+    List<UsernameOnlyDto> findProjectionsUsingClassByUsername(@Param("username") String username);
+
 }
