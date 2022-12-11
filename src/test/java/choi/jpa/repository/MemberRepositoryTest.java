@@ -451,4 +451,25 @@ class MemberRepositoryTest {
         Assertions.assertThat(result.size()).isEqualTo(1);
     }
 
+    @Test
+    public void projections() throws Exception {
+        //given
+        Team teamA = new Team("teamA");
+        em.persist(teamA);
+
+        em.persist(new Member("m1", 0, teamA));
+        em.persist(new Member("m2", 0, teamA));
+
+        em.flush();
+
+        //when
+        List<UsernameOnly> result = memberRepository.findProjectionsByUsername("m1");
+        for (UsernameOnly member : result) {
+            System.out.println(member.getUsername());
+        }
+
+        //then
+        Assertions.assertThat(result.size()).isEqualTo(1);
+    }
+
 }
