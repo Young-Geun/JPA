@@ -13,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import static choi.jpa.querydsl.entity.QMember.*;
+import java.util.List;
+
+import static choi.jpa.querydsl.entity.QMember.member;
 
 @SpringBootTest
 @Transactional
@@ -79,6 +81,54 @@ public class QuerydslBasicTest {
                 .fetchOne();
 
         Assertions.assertThat(findMember.getUsername()).isEqualTo("member1");
+    }
+
+    @Test
+    public void search() {
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .where(member.username.eq("member1")
+                        .and(member.age.eq(10))
+                )
+                .fetchOne();
+
+        Assertions.assertThat(findMember.getUsername()).isEqualTo("member1");
+
+        /*
+            검색조건 예시
+
+            member.username.eq("member1") // username = 'member1'
+            member.username.ne("member1") //username != 'member1'
+            member.username.eq("member1").not() // username != 'member1'
+            member.username.isNotNull() //이름이 is not null
+            member.age.in(10, 20) // age in (10,20)
+            member.age.notIn(10, 20) // age not in (10, 20)
+            member.age.between(10,30) //between 10, 30
+            member.age.goe(30) // age >= 30
+            member.age.gt(30) // age > 30
+            member.age.loe(30) // age <= 30
+            member.age.lt(30) // age < 30
+            member.username.like("member%") //like 검색
+            member.username.contains("member") // like ‘%member%’ 검색
+            member.username.startsWith("member") //like ‘member%’ 검색
+         */
+    }
+
+    @Test
+    public void searchAndParam() {
+        /*
+            search()에서 처럼 and()로 메서드 체인으로 연결할 수도 있지만,
+            아래와 같이 파라미터로 추가하여 AND조건을 표현할 수도 있다. (이 경우, null값은 무시되므로 동적 쿼리를 깔끔하게 만들 수 있다는 장점이 있다)
+         */
+        List<Member> result1 = queryFactory
+                .selectFrom(member)
+                .where(
+                        member.username.eq("member1"),
+                        member.age.eq(10)
+                )
+                .fetch();
+
+        Assertions.assertThat(result1.size()).isEqualTo(1);
     }
 
 }
