@@ -14,7 +14,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceUnit;
 import java.util.List;
 
 import static choi.jpa.querydsl.entity.QMember.member;
@@ -26,6 +28,9 @@ public class QuerydslBasicTest {
 
     @PersistenceContext
     EntityManager em;
+
+    @PersistenceUnit
+    EntityManagerFactory emf;
 
     JPAQueryFactory queryFactory;
 
@@ -366,6 +371,65 @@ public class QuerydslBasicTest {
             t=[Member(id=7, username=teamA, age=0), Team(id=1, name=teamA)]
             t=[Member(id=8, username=teamB, age=0), Team(id=2, name=teamB)]
          */
+    }
+
+    @Test
+    public void fetchJoinNo() throws Exception {
+        em.flush();
+        em.clear();
+
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+        /*
+            select
+                member0_.member_id as member_i1_1_,
+                member0_.age as age2_1_,
+                member0_.team_id as team_id4_1_,
+                member0_.username as username3_1_
+            from
+                member member0_
+            where
+                member0_.username=?
+         */
+
+        boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
+
+        Assertions.assertThat(loaded).as("페치 조인 미적용").isFalse();
+    }
+
+    @Test
+    public void fetchJoinUse() throws Exception {
+        em.flush();
+        em.clear();
+
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .join(member.team, team).fetchJoin()
+                .where(member.username.eq("member1"))
+                .fetchOne();
+
+        /*
+            select
+                member0_.member_id as member_i1_1_0_,
+                team1_.team_id as team_id1_2_1_,
+                member0_.age as age2_1_0_,
+                member0_.team_id as team_id4_1_0_,
+                member0_.username as username3_1_0_,
+                team1_.name as name2_2_1_
+            from
+                member member0_
+            inner join
+                team team1_
+                    on member0_.team_id=team1_.team_id
+            where
+                member0_.username=?
+         */
+
+        boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
+
+        Assertions.assertThat(loaded).as("페치 조인 적용").isTrue();
     }
 
 }
