@@ -7,6 +7,7 @@ import choi.jpa.querydsl.entity.Team;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -580,6 +581,33 @@ public class QuerydslBasicTest {
             username = member1 age = 10 rank = 2
             username = member2 age = 20 rank = 2
             username = member3 age = 30 rank = 1
+         */
+    }
+
+    @Test
+    public void constant() throws Exception {
+        Tuple result = queryFactory
+                .select(member.username, Expressions.constant("A"))
+                .from(member)
+                .fetchFirst();
+
+        System.out.println("result = " + result);
+        /*
+            result = [member1, A]
+         */
+    }
+
+    @Test
+    public void concat() throws Exception {
+        String result = queryFactory
+                .select(member.username.concat("_").concat(member.age.stringValue()))
+                .from(member)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+
+        System.out.println("result = " + result);
+        /*
+            result = member1_10
          */
     }
 
