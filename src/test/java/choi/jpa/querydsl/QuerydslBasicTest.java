@@ -1,11 +1,15 @@
 package choi.jpa.querydsl;
 
+import choi.jpa.querydsl.dto.MemberDto;
+import choi.jpa.querydsl.dto.UserDto;
 import choi.jpa.querydsl.entity.Member;
 import choi.jpa.querydsl.entity.QMember;
 import choi.jpa.querydsl.entity.QTeam;
 import choi.jpa.querydsl.entity.Team;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -646,6 +650,127 @@ public class QuerydslBasicTest {
             username=member2, age=20
             username=member3, age=30
             username=member4, age=40
+         */
+    }
+
+    @Test
+    public void findDtoByJPQL() throws Exception {
+        List<MemberDto> result = em.createQuery("select new choi.jpa.querydsl.dto.MemberDto(m.username, m.age) from Member m", MemberDto.class).getResultList();
+
+        for (MemberDto dto : result) {
+            System.out.println("dto = " + dto);
+        }
+        /*
+            dto = MemberDto(username=member1, age=10)
+            dto = MemberDto(username=member2, age=20)
+            dto = MemberDto(username=member3, age=30)
+            dto = MemberDto(username=member4, age=40)
+         */
+    }
+
+    @Test
+    public void findDtoBySetter() throws Exception {
+        List<MemberDto> result = queryFactory
+                .select(Projections.bean(MemberDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto dto : result) {
+            System.out.println("dto = " + dto);
+        }
+        /*
+            dto = MemberDto(username=member1, age=10)
+            dto = MemberDto(username=member2, age=20)
+            dto = MemberDto(username=member3, age=30)
+            dto = MemberDto(username=member4, age=40)
+         */
+    }
+
+    @Test
+    public void findDtoByField() throws Exception {
+        // fields : getter, setter 필요없음
+        List<MemberDto> result = queryFactory
+                .select(Projections.fields(MemberDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto dto : result) {
+            System.out.println("dto = " + dto);
+        }
+        /*
+            dto = MemberDto(username=member1, age=10)
+            dto = MemberDto(username=member2, age=20)
+            dto = MemberDto(username=member3, age=30)
+            dto = MemberDto(username=member4, age=40)
+         */
+    }
+
+    @Test
+    public void findUserDto() throws Exception {
+        List<UserDto> result = queryFactory
+                .select(Projections.fields(UserDto.class,
+                        member.username.as("name"),
+                        member.age))
+                .from(member)
+                .fetch();
+
+        for (UserDto dto : result) {
+            System.out.println("dto = " + dto);
+        }
+        /*
+            dto = UserDto(name=member1, age=10)
+            dto = UserDto(name=member2, age=20)
+            dto = UserDto(name=member3, age=30)
+            dto = UserDto(name=member4, age=40)
+         */
+    }
+
+    @Test
+    public void findUserDto2() throws Exception {
+        QMember memberSub = new QMember("memberSub");
+
+        List<UserDto> result = queryFactory
+                .select(Projections.fields(UserDto.class,
+                                member.username.as("name"),
+                                ExpressionUtils.as(
+                                        JPAExpressions
+                                                .select(memberSub.age.max())
+                                                .from(memberSub), "age")))
+                .from(member)
+                .fetch();
+
+        for (UserDto dto : result) {
+            System.out.println("dto = " + dto);
+        }
+        /*
+            dto = UserDto(name=member1, age=40)
+            dto = UserDto(name=member2, age=40)
+            dto = UserDto(name=member3, age=40)
+            dto = UserDto(name=member4, age=40)
+         */
+    }
+
+    @Test
+    public void findDtoByConstructor() throws Exception {
+        List<MemberDto> result = queryFactory
+                .select(Projections.constructor(MemberDto.class,
+                        member.username,
+                        member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto dto : result) {
+            System.out.println("dto = " + dto);
+        }
+        /*
+            dto = MemberDto(username=member1, age=10)
+            dto = MemberDto(username=member2, age=20)
+            dto = MemberDto(username=member3, age=30)
+            dto = MemberDto(username=member4, age=40)
          */
     }
 
