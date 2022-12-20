@@ -1,6 +1,7 @@
 package choi.jpa.querydsl;
 
 import choi.jpa.querydsl.dto.MemberDto;
+import choi.jpa.querydsl.dto.QMemberDto;
 import choi.jpa.querydsl.dto.UserDto;
 import choi.jpa.querydsl.entity.Member;
 import choi.jpa.querydsl.entity.QMember;
@@ -760,6 +761,24 @@ public class QuerydslBasicTest {
                 .select(Projections.constructor(MemberDto.class,
                         member.username,
                         member.age))
+                .from(member)
+                .fetch();
+
+        for (MemberDto dto : result) {
+            System.out.println("dto = " + dto);
+        }
+        /*
+            dto = MemberDto(username=member1, age=10)
+            dto = MemberDto(username=member2, age=20)
+            dto = MemberDto(username=member3, age=30)
+            dto = MemberDto(username=member4, age=40)
+         */
+    }
+
+    @Test
+    public void findDtoByQueryProjection() throws Exception {
+        List<MemberDto> result = queryFactory
+                .select(new QMemberDto(member.username, member.age))
                 .from(member)
                 .fetch();
 
