@@ -7,6 +7,7 @@ import choi.jpa.querydsl.entity.Member;
 import choi.jpa.querydsl.entity.QMember;
 import choi.jpa.querydsl.entity.QTeam;
 import choi.jpa.querydsl.entity.Team;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ExpressionUtils;
@@ -791,6 +792,36 @@ public class QuerydslBasicTest {
             dto = MemberDto(username=member3, age=30)
             dto = MemberDto(username=member4, age=40)
          */
+    }
+
+    @Test
+    public void dynamicQuery_BooleanBuilder() throws Exception {
+        String usernameParam = "member1";
+        Integer ageParam = 10;
+        List<Member> result = searchMember1(usernameParam, ageParam);
+        Assertions.assertThat(result.size()).isEqualTo(1);
+
+        for (Member member : result) {
+            System.out.println("member = " + member);
+        }
+        /*
+            member = Member(id=3, username=member1, age=10)
+         */
+    }
+
+    private List<Member> searchMember1(String usernameCond, Integer ageCond) {
+        BooleanBuilder builder = new BooleanBuilder();
+        if (usernameCond != null) {
+            builder.and(member.username.eq(usernameCond));
+        }
+        if (ageCond != null) {
+            builder.and(member.age.eq(ageCond));
+        }
+
+        return queryFactory
+                .selectFrom(member)
+                .where(builder)
+                .fetch();
     }
 
 }
