@@ -861,4 +861,99 @@ public class QuerydslBasicTest {
         return usernameEq(usernameCond).and(ageEq(ageCond));
     }
 
+    @Test
+    public void bulkUpdate() throws Exception {
+        long count = queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();
+
+        em.flush();
+        em.clear();
+
+        List<Member> result = queryFactory
+                .select(member)
+                .from(member)
+                .fetch();
+
+        for (Member member : result) {
+            System.out.println("member = " + member);
+        }
+
+        /*
+            em.flush();
+            em.clear(); 가 없을 떄,
+
+            member = Member(id=3, username=member1, age=10)
+            member = Member(id=4, username=member2, age=20)
+            member = Member(id=5, username=member3, age=30)
+            member = Member(id=6, username=member4, age=40)
+
+            ---
+
+            em.flush();
+            em.clear(); 가 있을 떄,
+
+            member = Member(id=3, username=비회원, age=10)
+            member = Member(id=4, username=비회원, age=20)
+            member = Member(id=5, username=member3, age=30)
+            member = Member(id=6, username=member4, age=40)
+
+            ---
+
+            차이나는 이유 : 벌크 연산은 영속성 컨텍스트를 거치지않고 DB에 바로 반영하기 때문
+
+         */
+    }
+
+    @Test
+    public void bulkAdd() throws Exception {
+        long count = queryFactory
+                .update(member)
+                .set(member.age, member.age.add(1))
+                .execute();
+
+        em.flush();
+        em.clear();
+
+        List<Member> result = queryFactory
+                .select(member)
+                .from(member)
+                .fetch();
+
+        for (Member member : result) {
+            System.out.println("member = " + member);
+        }
+        /*
+            member = Member(id=3, username=member1, age=11)
+            member = Member(id=4, username=member2, age=21)
+            member = Member(id=5, username=member3, age=31)
+            member = Member(id=6, username=member4, age=41)
+         */
+    }
+
+    @Test
+    public void bulkDelete() throws Exception {
+        long count = queryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+
+        em.flush();
+        em.clear();
+
+        List<Member> result = queryFactory
+                .select(member)
+                .from(member)
+                .fetch();
+
+        for (Member member : result) {
+            System.out.println("member = " + member);
+        }
+        /*
+            member = Member(id=3, username=member1, age=10)
+         */
+    }
+
 }
